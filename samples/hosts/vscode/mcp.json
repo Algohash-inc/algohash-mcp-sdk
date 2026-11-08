@@ -1,0 +1,18 @@
+{
+  "inputs": [
+    { "type": "promptString", "id": "algohash-studio-key", "description": "AlgoHash Studio MCP key (smk_…)", "password": true },
+    { "type": "promptString", "id": "algohash-team-key", "description": "AlgoHash Team MCP key (tmk_…)", "password": true }
+  ],
+  "servers": {
+    "algohash-studio": {
+      "type": "http",
+      "url": "https://console.algohash.ai/mcp/studio",
+      "headers": { "Authorization": "Bearer ${input:algohash-studio-key}" }
+    },
+    "algohash-team": {
+      "type": "http",
+      "url": "https://console.algohash.ai/mcp/team",
+      "headers": { "Authorization": "Bearer ${input:algohash-team-key}" }
+    }
+  }
+}

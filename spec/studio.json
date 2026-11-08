@@ -1,0 +1,6256 @@
+{
+ "server": "studio",
+ "serverVersion": "1.1.0",
+ "endpoint": "https://console.algohash.ai/mcp/studio",
+ "transport": "streamable-http (stateless JSON-RPC 2.0 POST, application/json responses)",
+ "protocolVersions": [
+  "2024-11-05",
+  "2025-03-26",
+  "2025-06-18",
+  "2025-11-25"
+ ],
+ "auth": {
+  "bearerPrefix": "smk_",
+  "oauth": true,
+  "issuer": "https://console.algohash.ai"
+ },
+ "scopes": [
+  "read",
+  "edit",
+  "spend",
+  "publish"
+ ],
+ "defaultNewKeyScopes": [
+  "read",
+  "edit",
+  "spend"
+ ],
+ "confirmThresholdHwt": 50,
+ "defaultDailyCapHwt": 300,
+ "maxBatch": 20,
+ "maxBodyBytes": 2097152,
+ "instructions": "AlgoHash Studio MCP —— 操作你自己帳戶嘅 Studio。\ntool 分工：studio = 資產庫／生成／場景範本／廣告精靈／Director 製作／影音層／IG／動態圖像（motion_*：模板、AI 寫、AI 導演、參考拆解、品牌套件、版本／撤銷 —— Studio 動態圖像頁撳得到嘅都有）／Motion 範本庫（search_motion_templates → get_motion_template：313 個排咗名嘅動態圖像範本，免費查；preview_motion_template 出分鏡靜幀（免費）→ 用戶批 → render_motion_template 💰 出片）；studio_project・studio_shots・studio_layers・studio_audio・studio_director・studio_export・studio_library = 導演剪片台（逐格專案）；studio_create = Create 頁（創作模式）＋電影剪輯／高光剪輯；studio_clipper = 長片剪精華（動效精剪預設筆記解說風格 = layout note：原片完整入舞台卡、標題常駐、逐字字幕、紙拼貼插畫；拼貼長鏡成片可以做插入片）；studio_talk_reel = 講者 Reel（講嘢片 → 字幕＋動態圖文＋聲效）；studio_footage = 素材腦（上載咗嘅片／資料夾 → 一句話自動剪、免費預覽、批咗先出片）；studio_collage = 拼貼長鏡（旁白 → 逐句紙拼貼隱喻 → 靜幀 → 首尾幀動畫 → 一鏡到底成片；先 call guide）；studio_paper = 拼貼紙解釋（題目 → 紙模型解說片：圖片模型畫元素、Motion 做動畫、語音聲效齊；用戶講紙模型／剪紙／paper craft／解說片就用呢隻；先 call guide）；studio_compiler = 編譯器；studio_longcut = 長片接駁；studio_assets = 角色／場景／道具詳情（版本、睇圖、記憶、聲線）；studio_outputs = 成品下載／預覽（所有出檔結果嘅唯一入口）；studio_storyboard = 動態分鏡（喺對話入面播分鏡、等用戶批）；studio_cast = 角色揀選（用戶揀主角）；studio_confirm = 報價批核卡（needs_confirmation 之後彈，用戶撳批准）；studio_browse = 素材庫卡（用戶撳揀參考）。\n💰 收到 needs_confirmation（報價，唔係錯誤）：先 call studio_confirm.show {args:{confirm_token, summary}} 彈報價卡（唔扣錢），跟住即刻 call studio_confirm.wait {args:{confirm_token}}：用戶一撳就返（≤50 秒，仲係 open 就再 call）。wait 回 approved（或者用戶喺對話親口講批）先帶 confirm_token 再 call；declined 就唔好做。冇卡嘅 host 直接講價錢問用戶。結果有 approval:\"user\" 同 approve_url → 一定要用戶喺 AlgoHash 批核頁親自批：卡上「批准」會開嗰頁，冇卡就將 approve_url 俾用戶；對話講「批」唔算，你自己 call decide 批唔到；未批帶 token 再 call 會回 awaiting_approval。\n🔐 收到 needs_permission（用戶批核規則要先問）：call studio_confirm.show {args:{permission_token, summary}} 彈權限卡，再 call studio_confirm.wait {args:{permission_token}}；允許之後用完全相同參數加 permission_token 再 call；拒絕就唔好做。冇卡嘅 host 直接問用戶。\n🗂 用戶話「用我之前嗰個角色／場景／張圖」但唔記得係邊個：call studio_browse.show {args:{pillar}} 俾佢撳揀。\n👤 先揀角色：studio_create.storyboard／cut 冇 {pillar:'avatars'} 參考又配唔到名 → 回 needs_cast（連 pick_id、pick_url、號碼）。call studio_cast.show {args:{pick_id}} 彈角色卡（MCP Apps）；冇卡就俾用戶 pick_url 或者問號碼再 studio_cast.choose。揀好再 call 原本嗰個 action 加 args.cast_pick:<pick_id>；用戶講明唔使角色先帶 args.avatar:'none'。唔好自己估角色。\n🎬 出片一定先分鏡：studio_create.storyboard（免費）→ storyboard_draw 💰（args.model 揀圖片模型 id 或 \"user\" 跟用戶設定；用戶講明用邊個模型就帶埋）→ studio_storyboard.show（播俾用戶睇）→ 用戶講「批」→ studio_storyboard.approve {confirm:true} → studio.storyboard_video 💰（或 studio_create.cut {storyboard}）。所有出片一律先分鏡、冇得跳過（冇 skip 選項）：未批分鏡嘅 storyboard_video／cut／compiler.run／longcut.run／shots.render 會回 needs_storyboard；generate_video 已停用（指返去分鏡流程）。出片之前一定先檢查：有冇畫好嘅分鏡？用戶批咗未？\n每個結果尾都有一段 NEXT（structuredContent.next）：講咗下一步 call 乜、要同用戶講乜 —— 照住行。\n流程（每步 → 主要 action）：\n• Create mode（創作模式）: 1.References → studio_assets.ref_sources, studio.list_assets | 2.Prompt → studio.ad_questions, studio.ad_prompt | 3.Output → studio.list_templates, studio.estimate_cost | 4.Camera & framing → studio.generate_image, studio.storyboard_video\n• Atelier Lens（珠寶腕錶棚拍）: 1.Product photo → studio.upload_asset, studio.list_assets | 2.Pick a template → studio.list_image_styles, studio.get_image_style | 3.Model + look → studio.list_assets, studio.estimate_cost | 4.Shoot → studio.generate_image, studio_outputs.get\n• Cinematic Cut（電影剪輯）: 1.Video + references → studio_assets.ref_sources, studio.list_gallery | 2.Storyboard → studio_create.storyboard, studio_create.storyboard_draw | 3.Model + look → studio_create.guide, studio_create.quote | 4.Render → studio_create.cut, studio_create.cut_status\n• Highlight Cut（高光剪輯）: 1.Video + references → studio_assets.ref_sources, studio.list_gallery | 2.Hook style + storyboard → studio_create.storyboard, studio_create.storyboard_draw | 3.Speakers + cast → studio_create.guide, studio_create.storyboard_versions | 4.Render → studio_create.cut, studio_create.cut_status\n• Paper Explainer（拼貼紙解釋）: 1.Topic + script → studio_paper.plan, studio_paper.get | 2.Draw parts → studio_paper.quote, studio_paper.render_art | 3.Voice + storyboard → studio_paper.voice, studio_paper.storyboard | 4.Render → studio_paper.render, studio_paper.get\n• From scratch（由零開始）: 1.Template or brief → studio.list_scene_templates, studio_project.create | 2.Opening frames → studio_project.estimate, studio_shots.render_frame | 3.Render shots → studio_project.start, studio_shots.render_all | 4.Stitch → studio_export.stitch, studio_export.stitch_status\n• From a reference video（跟一條參考片）: 1.Upload → studio.upload_asset, studio.list_gallery | 2.Reverse-engineer → studio_project.analyze, studio_project.replan | 3.Swap in your content → studio_shots.patch, studio_director.auto_refs | 4.Render + approve → studio_shots.render_all, studio_shots.collect\n• Compiler（編譯器）: 1.Assets → studio_assets.ref_sources, studio_compiler.options | 2.Plain-language brief → studio_compiler.compile | 3.Compile + refine → studio_compiler.refine, studio_compiler.adapt | 4.Render → studio_compiler.run, studio_compiler.job\n• Compose（合成模式）: 1.Pick projects → studio_project.list, studio_project.get | 2.Arrange pieces → studio_shots.genstrip, studio_shots.head | 3.Trim in/out → studio_project.get | 4.Compose → studio_project.composite, studio_export.stitch\n• Motion graphics（動態圖像）: 1.Brand + reference → studio.list_motion_brands, studio.save_motion_brand | 2.Make → studio.get_motion_catalog, studio.motion_create | 3.Edit + versions → studio.get_motion_draft, studio.motion_edit | 4.Export → studio.export_motion_draft, studio.motion_export_status\n• Talk reel（講者 Reel）: 1.Talking clip → studio.upload_asset, studio.list_gallery | 2.Style + start → studio_talk_reel.styles, studio_talk_reel.start | 3.Transcript + plan → studio_talk_reel.get, studio_talk_reel.words | 4.Reel + notes → studio_talk_reel.notes, studio_talk_reel.get\n• Collage Flow（拼貼長鏡）: 1.AI director → studio_collage.auto, studio_collage.auto_step | 2.Script + concept → studio_collage.guide, studio_collage.options | 3.Line metaphors → studio_collage.revise, studio_collage.edit | 4.Stills → studio_collage.quote, studio_collage.render_stills | 5.Animate + film → studio_collage.render_videos, studio_collage.collect\n• Long video → highlights（長片剪精華）: 1.Pick a long video → studio.list_gallery, studio_clipper.quote | 2.AI listens → studio_clipper.analyze, studio_clipper.get | 3.Pick clips → studio_clipper.get, studio_clipper.thumb | 4.Render 9:16 → studio_clipper.render, studio_clipper.render_status\n成品：出檔嘅結果帶 outputs[]（download_url ＝簽名下載連結，2–8 小時後過期；過期或者 status pending 就 call studio_outputs.get 換新）。generate_* 最多等約 50 秒，未完成回 pending＋next → 照 next call studio_outputs.get {job_id}，唔好重新生成。想喺對話入面直接俾用戶睇／播成品：call studio_outputs.get（支援 MCP Apps 嘅 host 會出內嵌播放器；show 會再加細預覽圖）。\n規矩：💰 會扣 HWT —— 先報價（estimate_cost／studio_create.quote／studio_project.estimate）再問用戶；單次 > 50 HWT 會回 needs_confirmation＋confirm_token；✋ 收唔返嘅 action 要 confirm:true。參考素材一律用 {pillar,id}／{asset_id}／{output_id}，唔好傳檔名。完整說明：GET /mcp/studio/skill.md",
+ "flows": [
+  {
+   "id": "create",
+   "title": "創作模式",
+   "en": "Create mode",
+   "sub": "Create 頁 Step 1–4（一般出圖出片）",
+   "steps": [
+    {
+     "title": "參考",
+     "en": "References",
+     "calls": [
+      "studio_assets.ref_sources",
+      "studio.list_assets",
+      "studio.list_gallery",
+      "studio.upload_asset"
+     ]
+    },
+    {
+     "title": "提示詞",
+     "en": "Prompt",
+     "calls": [
+      "studio.ad_questions",
+      "studio.ad_prompt",
+      "studio_create.storyboard",
+      "studio_create.storyboard_draw"
+     ]
+    },
+    {
+     "title": "輸出",
+     "en": "Output",
+     "calls": [
+      "studio.list_templates",
+      "studio.estimate_cost"
+     ]
+    },
+    {
+     "title": "鏡頭與構圖",
+     "en": "Camera & framing",
+     "calls": [
+      "studio.generate_image",
+      "studio.storyboard_video",
+      "studio.list_jobs",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "atelier",
+   "title": "珠寶腕錶棚拍",
+   "en": "Atelier Lens",
+   "sub": "相片版式範本 · 產品相 = Image 1（只出相）",
+   "steps": [
+    {
+     "title": "產品相",
+     "en": "Product photo",
+     "calls": [
+      "studio.upload_asset",
+      "studio.list_assets",
+      "studio.list_gallery"
+     ]
+    },
+    {
+     "title": "揀範本",
+     "en": "Pick a template",
+     "calls": [
+      "studio.list_image_styles",
+      "studio.get_image_style"
+     ]
+    },
+    {
+     "title": "模特兒＋造型",
+     "en": "Model + look",
+     "calls": [
+      "studio.list_assets",
+      "studio.estimate_cost"
+     ]
+    },
+    {
+     "title": "出相",
+     "en": "Shoot",
+     "calls": [
+      "studio.generate_image",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cinematic",
+   "title": "電影剪輯",
+   "en": "Cinematic Cut",
+   "sub": "精選影片範本 · Create 頁剪輯模式",
+   "steps": [
+    {
+     "title": "放片＋參考圖",
+     "en": "Video + references",
+     "calls": [
+      "studio_assets.ref_sources",
+      "studio.list_gallery",
+      "studio_create.quote"
+     ]
+    },
+    {
+     "title": "分鏡創作",
+     "en": "Storyboard",
+     "calls": [
+      "studio_create.storyboard",
+      "studio_create.storyboard_draw",
+      "studio_create.storyboard_versions",
+      "studio_create.storyboard_revise"
+     ]
+    },
+    {
+     "title": "揀模型＋風格質感",
+     "en": "Model + look",
+     "calls": [
+      "studio_create.guide",
+      "studio_create.quote"
+     ]
+    },
+    {
+     "title": "出片",
+     "en": "Render",
+     "calls": [
+      "studio_create.cut",
+      "studio_create.cut_status",
+      "studio_create.cut_recompose",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "highlight",
+   "title": "高光剪輯",
+   "en": "Highlight Cut",
+   "sub": "精選影片範本 · 加鉤子風格",
+   "steps": [
+    {
+     "title": "放片＋參考圖",
+     "en": "Video + references",
+     "calls": [
+      "studio_assets.ref_sources",
+      "studio.list_gallery",
+      "studio_create.quote"
+     ]
+    },
+    {
+     "title": "鉤子風格＋分鏡",
+     "en": "Hook style + storyboard",
+     "calls": [
+      "studio_create.storyboard",
+      "studio_create.storyboard_draw",
+      "studio_create.storyboard_revise"
+     ]
+    },
+    {
+     "title": "角色語言＋素材分工",
+     "en": "Speakers + cast",
+     "calls": [
+      "studio_create.guide",
+      "studio_create.storyboard_versions"
+     ]
+    },
+    {
+     "title": "出片",
+     "en": "Render",
+     "calls": [
+      "studio_create.cut",
+      "studio_create.cut_status",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "paper",
+   "title": "拼貼紙解釋",
+   "en": "Paper Explainer",
+   "sub": "紙模型動畫解說片 · 圖片模型畫元素、動畫引擎做動作（唔係生成片）",
+   "steps": [
+    {
+     "title": "題目＋腳本場景表",
+     "en": "Topic + script",
+     "calls": [
+      "studio_paper.plan",
+      "studio_paper.get",
+      "studio_paper.revise",
+      "studio_paper.approve"
+     ]
+    },
+    {
+     "title": "畫元素＋去背",
+     "en": "Draw parts",
+     "calls": [
+      "studio_paper.quote",
+      "studio_paper.render_art",
+      "studio_paper.collect"
+     ]
+    },
+    {
+     "title": "語音＋聲軌＋分鏡",
+     "en": "Voice + storyboard",
+     "calls": [
+      "studio_paper.voice",
+      "studio_paper.storyboard",
+      "studio_paper.view",
+      "studio_paper.approve"
+     ]
+    },
+    {
+     "title": "出片",
+     "en": "Render",
+     "calls": [
+      "studio_paper.render",
+      "studio_paper.get",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scratch",
+   "title": "由零開始",
+   "en": "From scratch",
+   "sub": "導演門",
+   "steps": [
+    {
+     "title": "揀範本／寫描述",
+     "en": "Template or brief",
+     "calls": [
+      "studio.list_scene_templates",
+      "studio_project.create",
+      "studio_director.script",
+      "studio_director.template"
+     ]
+    },
+    {
+     "title": "出齊每場第一張畫面",
+     "en": "Opening frames",
+     "calls": [
+      "studio_project.estimate",
+      "studio_shots.render_frame",
+      "studio_shots.collect"
+     ]
+    },
+    {
+     "title": "逐格出片",
+     "en": "Render shots",
+     "calls": [
+      "studio_project.start",
+      "studio_shots.render_all",
+      "studio_shots.collect",
+      "studio_shots.accept"
+     ]
+    },
+    {
+     "title": "串埋成品",
+     "en": "Stitch",
+     "calls": [
+      "studio_export.stitch",
+      "studio_export.stitch_status",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "source",
+   "title": "跟一條參考片",
+   "en": "From a reference video",
+   "sub": "導演門 · 風格轉移",
+   "steps": [
+    {
+     "title": "上載參考片",
+     "en": "Upload",
+     "calls": [
+      "studio.upload_asset",
+      "studio.list_gallery"
+     ]
+    },
+    {
+     "title": "逆向拆成模板",
+     "en": "Reverse-engineer",
+     "calls": [
+      "studio_project.analyze",
+      "studio_project.replan",
+      "studio_project.reblueprint"
+     ]
+    },
+    {
+     "title": "換你嘅內容",
+     "en": "Swap in your content",
+     "calls": [
+      "studio_shots.patch",
+      "studio_director.auto_refs",
+      "studio_director.cast",
+      "studio_director.casting_adopt"
+     ]
+    },
+    {
+     "title": "逐格確認生成",
+     "en": "Render + approve",
+     "calls": [
+      "studio_shots.render_all",
+      "studio_shots.collect",
+      "studio_shots.accept",
+      "studio_export.stitch",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "compiler",
+   "title": "編譯器",
+   "en": "Compiler",
+   "sub": "導演門",
+   "steps": [
+    {
+     "title": "放素材、改名",
+     "en": "Assets",
+     "calls": [
+      "studio_assets.ref_sources",
+      "studio_compiler.options"
+     ]
+    },
+    {
+     "title": "用白話寫一段",
+     "en": "Plain-language brief",
+     "calls": [
+      "studio_compiler.compile"
+     ]
+    },
+    {
+     "title": "編譯成劇本",
+     "en": "Compile + refine",
+     "calls": [
+      "studio_compiler.refine",
+      "studio_compiler.adapt"
+     ]
+    },
+    {
+     "title": "揀模型出片",
+     "en": "Render",
+     "calls": [
+      "studio_compiler.run",
+      "studio_compiler.job",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "compose",
+   "title": "合成模式",
+   "en": "Compose",
+   "sub": "導演門",
+   "steps": [
+    {
+     "title": "揀兩個專案",
+     "en": "Pick projects",
+     "calls": [
+      "studio_project.list",
+      "studio_project.get"
+     ]
+    },
+    {
+     "title": "拖積木落成品",
+     "en": "Arrange pieces",
+     "calls": [
+      "studio_shots.genstrip",
+      "studio_shots.head"
+     ]
+    },
+    {
+     "title": "剪入出點",
+     "en": "Trim in/out",
+     "calls": [
+      "studio_project.get"
+     ]
+    },
+    {
+     "title": "合成新專案",
+     "en": "Compose",
+     "calls": [
+      "studio_project.composite",
+      "studio_export.stitch",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mgdirector",
+   "title": "動態圖像",
+   "en": "Motion graphics",
+   "sub": "Director → 動態圖像（模板／AI 寫／AI 導演／參考拆解／品牌套件）",
+   "steps": [
+    {
+     "title": "品牌＋參考",
+     "en": "Brand + reference",
+     "calls": [
+      "studio.list_motion_brands",
+      "studio.save_motion_brand",
+      "studio.motion_ref_quote",
+      "studio.motion_ref",
+      "studio.motion_ref_status",
+      "studio.set_motion_ref_bounds"
+     ]
+    },
+    {
+     "title": "開片",
+     "en": "Make",
+     "calls": [
+      "studio.get_motion_catalog",
+      "studio.motion_create",
+      "studio.motion_direct",
+      "studio.list_motion_jobs",
+      "studio.motion_direct_status",
+      "studio.motion_direct_reply"
+     ]
+    },
+    {
+     "title": "改＋版本",
+     "en": "Edit + versions",
+     "calls": [
+      "studio.get_motion_draft",
+      "studio.motion_edit",
+      "studio.motion_revise",
+      "studio.get_motion_history",
+      "studio.undo_motion",
+      "studio.list_motion_versions",
+      "studio.restore_motion_version"
+     ]
+    },
+    {
+     "title": "出片",
+     "en": "Export",
+     "calls": [
+      "studio.export_motion_draft",
+      "studio.motion_export_status",
+      "studio.cancel_motion_export",
+      "studio.motion_open",
+      "studio.list_motion_drafts",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "talkreel",
+   "title": "講者 Reel",
+   "en": "Talk reel",
+   "sub": "動態圖像 · MG Director 範本（講嘢片 → 字幕＋動效＋聲效）",
+   "steps": [
+    {
+     "title": "放講嘢片",
+     "en": "Talking clip",
+     "calls": [
+      "studio.upload_asset",
+      "studio.list_gallery",
+      "studio_talk_reel.quote"
+     ]
+    },
+    {
+     "title": "揀風格開單",
+     "en": "Style + start",
+     "calls": [
+      "studio_talk_reel.styles",
+      "studio_talk_reel.start"
+     ]
+    },
+    {
+     "title": "逐字稿＋編排",
+     "en": "Transcript + plan",
+     "calls": [
+      "studio_talk_reel.get",
+      "studio_talk_reel.words",
+      "studio_talk_reel.plan",
+      "studio_talk_reel.next"
+     ]
+    },
+    {
+     "title": "成片＋導演筆記",
+     "en": "Reel + notes",
+     "calls": [
+      "studio_talk_reel.notes",
+      "studio_talk_reel.get",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "collage",
+   "title": "拼貼長鏡",
+   "en": "Collage Flow",
+   "sub": "Director 模式／Create 卡（旁白 → 逐句紙拼貼隱喻 → 一鏡到底定格動畫）",
+   "steps": [
+    {
+     "title": "AI 導演代做",
+     "en": "AI director",
+     "calls": [
+      "studio_collage.auto",
+      "studio_collage.auto_step"
+     ]
+    },
+    {
+     "title": "旁白＋揀概念",
+     "en": "Script + concept",
+     "calls": [
+      "studio_collage.guide",
+      "studio_collage.options",
+      "studio_collage.plan",
+      "studio_collage.get",
+      "studio_collage.pick"
+     ]
+    },
+    {
+     "title": "逐句隱喻",
+     "en": "Line metaphors",
+     "calls": [
+      "studio_collage.revise",
+      "studio_collage.edit",
+      "studio_collage.approve"
+     ]
+    },
+    {
+     "title": "靜幀",
+     "en": "Stills",
+     "calls": [
+      "studio_collage.quote",
+      "studio_collage.render_stills",
+      "studio_collage.collect",
+      "studio_collage.view",
+      "studio_collage.adopt"
+     ]
+    },
+    {
+     "title": "動畫＋成片",
+     "en": "Animate + film",
+     "calls": [
+      "studio_collage.render_videos",
+      "studio_collage.collect",
+      "studio_collage.film",
+      "studio_collage.qa",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "clips",
+   "title": "長片剪精華",
+   "en": "Long video → highlights",
+   "sub": "導演門",
+   "steps": [
+    {
+     "title": "揀一條長片",
+     "en": "Pick a long video",
+     "calls": [
+      "studio.list_gallery",
+      "studio_clipper.quote"
+     ]
+    },
+    {
+     "title": "AI 聽晒成條片",
+     "en": "AI listens",
+     "calls": [
+      "studio_clipper.analyze",
+      "studio_clipper.get"
+     ]
+    },
+    {
+     "title": "揀你要嘅幾段",
+     "en": "Pick clips",
+     "calls": [
+      "studio_clipper.get",
+      "studio_clipper.thumb"
+     ]
+    },
+    {
+     "title": "出直版短片",
+     "en": "Render 9:16",
+     "calls": [
+      "studio_clipper.render",
+      "studio_clipper.render_status",
+      "studio_outputs.get"
+     ]
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "name": "studio",
+   "description": "Studio 視覺創作台（遠端 MCP）—— 操作你自己帳戶嘅視覺資產同生成：角色／場景／道具三支柱、成品同素材庫、生成任務狀態，同埋真正出圖出片。用 `action` 揀操作。\n用戶分享 YouTube、Instagram、Facebook、TikTok、小紅書、Vimeo 等支援平台影片 URL 時，直接 call action:'import_reference_video' 匯入素材庫；唔使叫用戶先下載。私人／需登入影片可能取不到。\n生成流程：出圖 estimate_cost（睇價）→ generate_image（會由呢個帳戶扣 HWT）；出片一律先分鏡（storyboard → storyboard_draw → 用戶批 → storyboard_video），generate_video 已停用。create_asset 開 draft（免費）→ process_asset 先真正生成（扣費）。\n非同步唔止一種，唔好一律當 generation_id 處理：\n① generate_image / storyboard_video —— MCP 最多等約 50 秒：出咗就即回 outputs[]（每件有 download_url ＝簽名下載連結、media_url ＝網上播放、expires_at），將 download_url 交俾用戶就得；個別檔仲準備緊（status pending：上雲／燒水印）就隔 retry_after_sec 再 call studio_outputs.get。等唔切就回 {pending:true, generation_id, next:{tool:'studio_outputs', action:'get', args:{job_id}}} —— 呢個係正常、唔係失敗：隔 15 秒左右照 next call studio_outputs（未完成會再回 pending），**唔好重新生成**（會再扣錢）。**得呢兩個**係扣 HWT 兼失敗自動退款。\n② process_asset / edit_asset —— 即回 status:'processing'，冇 generation_id，亦**唔會**喺 list_jobs 出現。用返你傳入嗰個 id 行 action:'get_asset' 查 asset.status（draft → processing → ready／error）。error 會自動退款。\n③ 影音層（preview_narration／synthesize_narration／mix_and_finalize）同 montage_production —— 全部**同步做完先回**，唔使查狀態。旁白喺 lines[].output_id、混好條片喺 output_id，兩樣都入咗成品庫（旁白係 .wav，用 media:'image'／'video' 篩就會濾走佢），亦可以 get_production 攞 final_output_id。呢層唔經 HWT。\n④ ig_autoplan 係**讀**設定，唔會排嘢；自動排一輪（ig_plan_now）MCP 唔開放，要用戶喺 Studio 介面撳。\n⑤ ad_storyboard／generate_scene_template 係即時 LLM，回嘅嘢就係成品，冇 job。\n呢個 server 冇 SSE、冇推送，查狀態一律靠上面嗰幾個 action 自己 poll。\n下載／預覽任何成品（output_id／asset_id／job_id）一律用 studio_outputs：get 回簽名 download_url，show 再加細預覽圖。連結 2–8 小時後過期 —— 過期就再 call get 換新。list_gallery 唔帶連結，攞到 id 之後交俾 studio_outputs.get。\n有旁白／配樂嘅片（restyle／longcut／production 三套都得，用 kind 分）：先 set_av_plan → check_shot_plan → preview_narration → synthesize_narration，用實測秒數倒返去定每格片長，**之後先出片**（照分鏡流程 storyboard_video；TTS 平過出片三個數量級）。\n參數說明按需派：某個 action 叫錯（未知參數 → 乜都唔行；或者回 error）結果會夾 format（嗰個 action 嘅用法同參數全文），照住重 call。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "list_assets",
+       "match_cast",
+       "get_asset",
+       "list_gallery",
+       "search_library",
+       "list_jobs",
+       "select_version",
+       "import_reference_video",
+       "list_productions",
+       "get_production",
+       "list_templates",
+       "list_video_models",
+       "list_image_styles",
+       "get_image_style",
+       "search_motion_templates",
+       "get_motion_template",
+       "preview_motion_template",
+       "render_motion_template",
+       "render_paper_reel",
+       "motion_render_status",
+       "cancel_motion_render",
+       "fork_motion_template",
+       "list_motion_forks",
+       "get_motion_fork",
+       "edit_motion_fork",
+       "motion_fork_source",
+       "restore_motion_fork",
+       "delete_motion_fork",
+       "list_scene_templates",
+       "generate_scene_template",
+       "apply_scene_template",
+       "estimate_cost",
+       "set_shot_selection",
+       "generate_image",
+       "generate_video",
+       "create_asset",
+       "process_asset",
+       "edit_asset",
+       "rename_asset",
+       "set_image_model",
+       "analyze_refs",
+       "ad_questions",
+       "ad_prompt",
+       "ad_chat",
+       "ad_storyboard",
+       "prompt_guide",
+       "storyboard_plan",
+       "draw_storyboard",
+       "storyboard_revise",
+       "storyboard_video",
+       "create_production",
+       "save_storyboard",
+       "accept_storyboard",
+       "set_production_video_model",
+       "montage_production",
+       "record_clip",
+       "finalize_production",
+       "stitch_production",
+       "delete_production",
+       "get_av_plan",
+       "set_av_plan",
+       "check_shot_plan",
+       "plan_music",
+       "preview_narration",
+       "synthesize_narration",
+       "mix_and_finalize",
+       "list_folders",
+       "create_folder",
+       "move_to_folder",
+       "use_output_as_input",
+       "list_image_models",
+       "upload_asset",
+       "ig_status",
+       "social_accounts",
+       "ig_recent_media",
+       "ig_list_posts",
+       "ig_schedule_post",
+       "ig_update_post",
+       "ig_delete_post",
+       "ig_publish_now",
+       "ig_caption",
+       "ig_autoplan",
+       "blog_styles",
+       "blog_sites",
+       "blog_site_save",
+       "blog_list_posts",
+       "blog_create_post",
+       "blog_update_post",
+       "blog_delete_post",
+       "blog_generate",
+       "blog_embed_code",
+       "social_comments",
+       "social_insights",
+       "social_reply",
+       "social_hide",
+       "social_delete",
+       "social_like",
+       "social_dm_flows",
+       "social_dm_flow_save",
+       "social_dm_flow_enable",
+       "brand_list_posts",
+       "brand_create_post",
+       "brand_delete_post",
+       "motion_direct",
+       "motion_direct_status",
+       "motion_direct_reply",
+       "motion_direct_cancel",
+       "get_motion_catalog",
+       "list_motion_drafts",
+       "get_motion_draft",
+       "motion_create",
+       "motion_revise",
+       "motion_edit",
+       "motion_open",
+       "motion_ref",
+       "motion_ref_status",
+       "motion_ref_reread",
+       "list_motion_refs",
+       "motion_ref_quote",
+       "set_motion_ref_bounds",
+       "delete_motion_ref",
+       "list_motion_jobs",
+       "list_motion_brands",
+       "save_motion_brand",
+       "delete_motion_brand",
+       "delete_motion_draft",
+       "get_motion_history",
+       "list_motion_versions",
+       "save_motion_version",
+       "restore_motion_version",
+       "undo_motion",
+       "export_motion_draft",
+       "motion_export_status",
+       "cancel_motion_export"
+      ],
+      "description": "list_assets=列角色/場景/道具｜match_cast=用戶講起嘅角色/場景/道具名 → 對返角色庫資產｜get_asset=單個資產詳情｜list_gallery=列已生成嘅圖片同影片｜search_library=用描述搵返用戶自己啲圖／片／素材｜list_jobs=查生成任務狀態｜list_productions=列 Director 製作｜get_production=單個製作詳情｜list_templates=列可用影片模板｜list_image_styles=相片版式範本｜get_image_style=單個範本嘅欄位＋全部下拉選項＋點出相｜search_motion_templates=Motion 動態圖像範本庫｜get_motion_template=單個範本全份：prompt、props｜preview_motion_template=伺服器出範本靜幀｜render_motion_template=用戶批咗分鏡先出片｜fork_motion_template=複製範本原始碼做用戶自己一份｜list_video_models=逐隻影片模型｜list_scene_templates=列 35 個現成場景範本｜generate_scene_template=用戶個題材唔喺 35 個入面｜apply_scene_template=把範本｜select_version=揀資產版本｜estimate_cost=預估生成 HWT 成本卡｜set_shot_selection=記低剔咗邊幾格｜generate_image=真正出圖｜create_asset=用一張參考圖開新角色/場景/道具｜process_asset=處理 draft 令佢變 ready｜edit_asset=改現有資產出新版本｜rename_asset=改名｜set_image_model=揀圖片生成引擎｜analyze_refs=AI 睇參考圖出描述/風格 profile｜ad_questions=出創作問卷｜ad_prompt=問答→專業提示詞｜ad_chat=對話式傾創意｜ad_storyboard=提示詞→分鏡表｜prompt_guide=電影感提示詞守則｜storyboard_plan=電影模式／高光模式／一鏡到底／電影演繹分鏡｜draw_storyboard=將 storyboard_plan 嘅版本畫成分｜storyboard_revise=喺某版上面按 instruction 開新版本｜storyboard_video=冇源片出片：用分鏡版本嘅角色／場景／道具＋分鏡圖｜create_production=開 Director 製作｜save_storyboard=寫入分鏡｜accept_storyboard=用戶批核後開閘出片｜set_production_video_model=換出片模型｜montage_production=逐格 keyframe 拼圖｜record_clip=記低某格進度｜finalize_production=收貨整條片｜stitch_production=逐格 clip 串成成品｜delete_production=刪製作｜get_av_plan=睇返份影音計劃｜set_av_plan=寫入計劃｜check_shot_plan=免費驗一次：捉「每格都差唔多」｜plan_music=寫配樂段落 cues｜preview_narration=試一句音｜synthesize_narration=合成成套旁白｜mix_and_finalize=本地混音收貨｜list_folders/create_folder/move_to_folder=資料夾整理｜use_output_as_input=成品轉做下次參考｜list_image_models=有咩圖片引擎｜upload_asset=由 url/base64 入素材庫｜import_reference_video=由支援平台 URL 匯入影片到素材庫｜ig_status=IG 連咗未｜social_accounts=各平台｜ig_recent_media=IG 最近帖同表現｜ig_list_posts=行事曆上嘅帖｜ig_schedule_post=排帖｜ig_publish_now=即刻出街｜ig_update_post/ig_delete_post=改/刪排程｜ig_caption=AI 寫 caption+hashtags｜ig_autoplan=自動排程設定｜blog_styles=SEO 封面圖風格｜blog_sites=我嘅 blog｜blog_site_save=開／改 blog 設定｜blog_list_posts=行事曆上嘅 SEO 文章｜blog_create_post=排一篇 SEO 文章｜blog_generate=重新生成｜blog_update_post=改題目／時間／文章｜blog_delete_post=刪｜blog_embed_code=嵌入碼｜social_comments=帖子留言／回覆｜social_insights=帳號＋逐篇數據｜social_reply=以帳號身分公開回覆留言｜social_hide=隱藏/取消隱藏留言｜social_delete=刪留言｜social_like=以專頁身分讚好留言｜social_dm_flows=留言自動 DM 流程清單｜social_dm_flow_save=新增／修改流程｜social_dm_flow_enable=開／停一條流程｜brand_list_posts=品牌 feed｜brand_create_post=發公開貼｜brand_delete_post=刪自己嘅貼｜get_motion_catalog=動態圖像｜list_motion_drafts=列動態圖像草稿｜get_motion_draft=一份草稿逐元素清單｜motion_create=新做一條動畫｜motion_revise=AI 按白話改一份｜motion_edit=按地址直接改元素｜motion_direct=AI 導演｜motion_direct_status=問進度｜motion_direct_reply=轉達用戶答案｜motion_direct_cancel=取消｜motion_open=喺用戶開住嘅 Studio 打開一份｜export_motion_draft=伺服器出片：草稿 → MP4 入用戶素材庫｜motion_export_status=伺服器出片進度／結果｜cancel_motion_export=取消伺服器出片｜motion_ref=參考拆解：用戶素材庫一條參考廣告片｜motion_ref_status=問拆解進度／結果｜motion_ref_reread=AI 重讀一段｜list_motion_refs=我嘅參考拆解｜motion_ref_quote=參考拆解報價｜set_motion_ref_bounds=拖分界重新分段｜delete_motion_ref=刪參考拆解｜list_motion_jobs=我嘅 AI 導演 job 清單｜list_motion_brands=我嘅品牌套件｜save_motion_brand=開／改品牌套件｜delete_motion_brand=刪品牌套件｜delete_motion_draft=刪動畫草稿｜get_motion_history=草稿動態｜list_motion_versions=草稿版本｜save_motion_version=存命名版本｜restore_motion_version=還原去某個版本｜undo_motion=撤銷｜（每個 action 嘅參數照下面 key 名平放；叫錯會即回嗰個 action 嘅完整格式）"
+     },
+     "pillar": {
+      "type": "string",
+      "enum": [
+       "avatars",
+       "environments",
+       "items"
+      ]
+     },
+     "id": {
+      "type": "string"
+     },
+     "version": {
+      "type": "integer"
+     },
+     "search": {
+      "type": "string"
+     },
+     "plan_id": {
+      "type": "string"
+     },
+     "instruction": {
+      "type": "string"
+     },
+     "panel": {
+      "type": "integer"
+     },
+     "approval_id": {
+      "type": "string"
+     },
+     "query": {
+      "type": "string"
+     },
+     "template_key": {
+      "type": "string"
+     },
+     "include_code": {
+      "type": "boolean"
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "remocn",
+       "shotcraft",
+       "rendercomp",
+       "rve"
+      ]
+     },
+     "layer": {
+      "type": "string",
+      "enum": [
+       "layerable",
+       "fullframe"
+      ]
+     },
+     "min_score": {
+      "type": "number"
+     },
+     "offset": {
+      "type": "integer"
+     },
+     "props": {
+      "type": "object"
+     },
+     "still_at": {
+      "type": "array",
+      "items": {
+       "type": "number"
+      }
+     },
+     "board_id": {
+      "type": "string"
+     },
+     "preview_job_id": {
+      "type": "string"
+     },
+     "fork_id": {
+      "type": "string"
+     },
+     "fork_version": {
+      "type": "integer"
+     },
+     "patches": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "path": {
+         "type": "string"
+        },
+        "find": {
+         "type": "string"
+        },
+        "replace": {
+         "type": "string"
+        },
+        "all": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "find",
+        "replace"
+       ]
+      }
+     },
+     "files": {
+      "type": "object",
+      "additionalProperties": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     },
+     "meta": {
+      "type": "object",
+      "properties": {
+       "width": {
+        "type": "integer"
+       },
+       "height": {
+        "type": "integer"
+       },
+       "fps": {
+        "type": "integer"
+       },
+       "seconds": {
+        "type": "number"
+       }
+      }
+     },
+     "path": {
+      "type": "string"
+     },
+     "base_version": {
+      "type": "integer"
+     },
+     "fork_note": {
+      "type": "string"
+     },
+     "seconds": {
+      "type": "number"
+     },
+     "transparent": {
+      "type": "boolean"
+     },
+     "modality": {
+      "type": "string"
+     },
+     "text": {
+      "type": "string"
+     },
+     "style_id": {
+      "type": "string"
+     },
+     "style_values": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      }
+     },
+     "style_cat": {
+      "type": "string"
+     },
+     "draw_style": {
+      "type": "string",
+      "enum": [
+       "sketch",
+       "pencil",
+       "photo",
+       "anime",
+       "concept",
+       "comic",
+       "watercolor",
+       "previs3d"
+      ]
+     },
+     "arrows": {
+      "type": "boolean"
+     },
+     "video_style": {
+      "type": "string",
+      "enum": [
+       "realistic",
+       "film",
+       "commercial",
+       "anime",
+       "animation3d",
+       "match"
+      ]
+     },
+     "sb_style": {
+      "type": "string",
+      "enum": [
+       "cinematic",
+       "highlight",
+       "oner",
+       "explainer"
+      ]
+     },
+     "auto_cast": {
+      "type": "boolean"
+     },
+     "url": {
+      "type": "string"
+     },
+     "note": {
+      "type": "boolean"
+     },
+     "max_shots": {
+      "type": "integer"
+     },
+     "template_id": {
+      "type": "string"
+     },
+     "append": {
+      "type": "boolean"
+     },
+     "continue_from": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "include": {
+      "type": "object"
+     },
+     "consistency": {
+      "type": "string",
+      "enum": [
+       "A",
+       "B",
+       "C"
+      ]
+     },
+     "style": {
+      "type": "string"
+     },
+     "media": {
+      "type": "string",
+      "enum": [
+       "image",
+       "video"
+      ]
+     },
+     "cost_kind": {
+      "type": "string",
+      "enum": [
+       "image",
+       "video",
+       "scene",
+       "avatar",
+       "avatar_merge",
+       "item"
+      ]
+     },
+     "duration_pick": {
+      "type": "string",
+      "enum": [
+       "shortest",
+       "longest"
+      ]
+     },
+     "duration": {
+      "type": "integer"
+     },
+     "resolution": {
+      "type": "string",
+      "enum": [
+       "480p",
+       "720p"
+      ]
+     },
+     "ratio": {
+      "type": "string"
+     },
+     "limit": {
+      "type": "integer"
+     },
+     "cursor": {
+      "type": "string"
+     },
+     "prompt": {
+      "type": "string"
+     },
+     "refs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "pillar": {
+         "type": "string",
+         "enum": [
+          "avatars",
+          "environments",
+          "items"
+         ]
+        },
+        "id": {
+         "type": "string"
+        },
+        "asset_id": {
+         "type": "string"
+        },
+        "output_id": {
+         "type": "string"
+        },
+        "role": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "cast_roles": {
+      "type": "string"
+     },
+     "video_ref": {
+      "type": "object",
+      "properties": {
+       "asset_id": {
+        "type": "string"
+       },
+       "output_id": {
+        "type": "string"
+       }
+      }
+     },
+     "image_resolution": {
+      "type": "string",
+      "enum": [
+       "1K",
+       "2K",
+       "4K"
+      ]
+     },
+     "seed": {
+      "type": "integer"
+     },
+     "template": {
+      "type": [
+       "string",
+       "object"
+      ]
+     },
+     "name": {
+      "type": "string"
+     },
+     "custom_prompt": {
+      "type": "string"
+     },
+     "image_model_id": {
+      "type": "string",
+      "description": "Model ids come from list_image_models."
+     },
+     "out_kind": {
+      "type": "string",
+      "enum": [
+       "image",
+       "video",
+       "packet"
+      ]
+     },
+     "mode": {
+      "type": "string",
+      "enum": [
+       "normal",
+       "merge",
+       "style",
+       "breakdown"
+      ]
+     },
+     "qa": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "q": {
+         "type": "string"
+        },
+        "a": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "messages": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "role": {
+         "type": "string"
+        },
+        "content": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "finalize": {
+      "type": "boolean"
+     },
+     "shot_count": {
+      "type": "integer"
+     },
+     "vision": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "token": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "memories": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "available_tokens": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "ref_roles": {
+      "type": "object"
+     },
+     "intro": {
+      "type": "string"
+     },
+     "hyper": {
+      "type": "boolean"
+     },
+     "title": {
+      "type": "string"
+     },
+     "example": {
+      "type": "string"
+     },
+     "catalog_section": {
+      "type": "string",
+      "enum": [
+       "grammars",
+       "art",
+       "presets",
+       "templates",
+       "transitions",
+       "music",
+       "examples"
+      ]
+     },
+     "motion_template": {
+      "type": "string"
+     },
+     "template_params": {
+      "type": "object"
+     },
+     "plan_only": {
+      "type": "boolean"
+     },
+     "motion_music": {
+      "type": "string"
+     },
+     "preset": {
+      "type": "string"
+     },
+     "scene": {
+      "type": "integer"
+     },
+     "target": {
+      "type": "string"
+     },
+     "edits": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "job_id": {
+      "type": "string"
+     },
+     "motion_resolution": {
+      "type": "string",
+      "enum": [
+       "720p",
+       "1080p"
+      ]
+     },
+     "motion_fps": {
+      "type": "integer",
+      "enum": [
+       30,
+       60
+      ]
+     },
+     "script": {
+      "type": "string"
+     },
+     "reference": {
+      "type": "string"
+     },
+     "assets": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "review": {
+      "type": "string",
+      "enum": [
+       "auto",
+       "plan_first",
+       "before_export"
+      ]
+     },
+     "output": {
+      "type": "string",
+      "enum": [
+       "film",
+       "draft"
+      ]
+     },
+     "strict_assets": {
+      "type": "boolean"
+     },
+     "review_frames": {
+      "type": "boolean"
+     },
+     "approve": {
+      "type": "boolean"
+     },
+     "notes": {
+      "type": "string"
+     },
+     "gate_id": {
+      "type": "string"
+     },
+     "since": {
+      "type": "integer"
+     },
+     "detail": {
+      "type": "string",
+      "enum": [
+       "brief",
+       "full"
+      ]
+     },
+     "export": {
+      "type": "string",
+      "enum": [
+       "approved",
+       "head"
+      ]
+     },
+     "brief": {
+      "type": "string"
+     },
+     "shots": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "shot": {
+      "type": "integer"
+     },
+     "frame": {
+      "type": "string"
+     },
+     "output_id": {
+      "type": "string"
+     },
+     "model": {
+      "type": "string"
+     },
+     "patch": {
+      "type": "object"
+     },
+     "music": {
+      "type": "object"
+     },
+     "shot_numbers": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      }
+     },
+     "data_base64": {
+      "type": "string"
+     },
+     "category": {
+      "type": "string"
+     },
+     "confirm": {
+      "type": "boolean"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "outputs",
+       "assets",
+       "reel",
+       "image",
+       "story",
+       "text",
+       "video",
+       "restyle",
+       "longcut",
+       "production"
+      ]
+     },
+     "caption": {
+      "type": "string"
+     },
+     "site_id": {
+      "type": "string"
+     },
+     "topic": {
+      "type": "string"
+     },
+     "keyword": {
+      "type": "string"
+     },
+     "editor_notes": {
+      "type": "string"
+     },
+     "img_style": {
+      "type": "string"
+     },
+     "generate": {
+      "type": "boolean"
+     },
+     "only": {
+      "type": "string",
+      "enum": [
+       "article",
+       "image"
+      ]
+     },
+     "site": {
+      "type": "object"
+     },
+     "article": {
+      "type": "object"
+     },
+     "scheduled_at": {
+      "type": "integer"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "draft",
+       "scheduled"
+      ]
+     },
+     "days": {
+      "type": "integer"
+     },
+     "flow": {
+      "type": "object"
+     },
+     "flow_id": {
+      "type": "string"
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "target_id": {
+      "type": "string"
+     },
+     "hidden": {
+      "type": "boolean"
+     },
+     "liked": {
+      "type": "boolean"
+     },
+     "conversation_of": {
+      "type": "string"
+     },
+     "from": {
+      "type": "integer"
+     },
+     "to": {
+      "type": "integer"
+     },
+     "ig_user_id": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string",
+      "enum": [
+       "instagram",
+       "threads",
+       "facebook",
+       "linkedin",
+       "x",
+       "tiktok",
+       "youtube"
+      ]
+     },
+     "brand_id": {
+      "type": "string"
+     },
+     "brand": {
+      "type": "object"
+     },
+     "make_default": {
+      "type": "boolean"
+     },
+     "bounds": {
+      "type": "array",
+      "items": {
+       "type": "number"
+      }
+     },
+     "version_id": {
+      "type": "string"
+     },
+     "label": {
+      "type": "string"
+     },
+     "undo_grp": {
+      "type": "string"
+     },
+     "redo": {
+      "type": "boolean"
+     },
+     "asset_id": {
+      "type": "string"
+     },
+     "ref_id": {
+      "type": "string"
+     },
+     "section": {
+      "type": "integer"
+     },
+     "hint": {
+      "type": "string"
+     },
+     "in_sec": {
+      "type": "number"
+     },
+     "out_sec": {
+      "type": "number"
+     },
+     "wait": {
+      "type": "boolean"
+     },
+     "folder_id": {
+      "type": "string"
+     },
+     "output_ids": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "asset_ids": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "storyboard": {
+      "type": "string",
+      "description": "用戶批咗嘅分鏡版本 id（studio_storyboard.approve 過）。出片一律由已批分鏡出：用 storyboard_video {plan_id}；generate_video 已停用。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "單次花費 > 50 HWT 嘅 action 第一次會回 needs_confirmation＋confirm_token；問過用戶之後用完全相同嘅參數加呢個 token 再 call。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Studio: assets, generation and publishing",
+   "annotations": {
+    "title": "Studio: assets, generation and publishing",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   },
+   "x-actions": [
+    {
+     "name": "list_assets",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列角色/場景/道具"
+    },
+    {
+     "name": "match_cast",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用戶講起嘅角色/場景/道具名 → 對返角色庫資產（完整名自動用、似但唔肯定就回 ambiguous 要用戶揀）。ad_chat／generate_image／storyboard_plan 已經會自動做，唔使先 call"
+    },
+    {
+     "name": "get_asset",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "單個資產詳情"
+    },
+    {
+     "name": "list_gallery",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列已生成嘅圖片同影片(kind:'outputs')或上傳素材庫(kind:'assets')，可用 media 篩圖/片"
+    },
+    {
+     "name": "search_library",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用描述搵返用戶自己啲圖／片／素材（語意＋字眼混合：「上次海邊嗰隻狗」「紅色玫瑰海報」「K7Q2LM」；片會講中邊一秒）。用戶講『我之前整過／上傳過嘅 XX』就用呢個，唔好 list_gallery 逐頁捽；會喺對話出結果卡。結果 id 可以直接做 refs（{output_id} 或 {asset_id}）或 use_output_as_input"
+    },
+    {
+     "name": "list_jobs",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "查生成任務狀態(queued/running/completed/error；用戶問『生成好未』就用呢個)"
+    },
+    {
+     "name": "select_version",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "揀資產版本"
+    },
+    {
+     "name": "import_reference_video",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "由支援平台 URL 匯入影片到素材庫（固定收費；失敗全額退款）"
+    },
+    {
+     "name": "list_productions",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列 Director 製作(分鏡先行嘅廣告專案)"
+    },
+    {
+     "name": "get_production",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "單個製作詳情(分鏡+逐格進度)"
+    },
+    {
+     "name": "list_templates",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列可用影片模板"
+    },
+    {
+     "name": "list_video_models",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "逐隻影片模型（Studio 同名 label）報今次規格嘅價＋片長 min/max（用戶問『邊隻最平／幾錢』就用）"
+    },
+    {
+     "name": "list_image_styles",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "相片版式範本（同 Studio Create「海報／封面範本」同一份；只出相，冇影片）。冇 style_cat 回分類；Atelier Lens 珠寶腕錶棚拍（腕錶／戒指／項鍊／耳環／手鍊 22 款，模特兒／造型／場景下拉）= style_cat:'atelier'"
+    },
+    {
+     "name": "get_image_style",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "單個範本嘅欄位＋全部下拉選項＋點出相（免費）。出相用 generate_image 帶 style_id＋style_values＋refs（產品相自動落 Image 1、角色自動做模特兒、比例跟範本）"
+    },
+    {
+     "name": "search_motion_templates",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Motion 動態圖像範本庫（313 個第三方範本，按設計質素排名 S/A/B/C：標題、動態字、logo 揭幕、轉場、數據圖、UI／產品、社交卡…；免費）。query 照抄用戶原話；結果有 preview_url（4 格預覽）、tier、layer_guess（layerable=可以疊喺片上／fullframe=成個畫面）"
+    },
+    {
+     "name": "get_motion_template",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "單個範本全份：prompt、props（欄位＋預設）、composition（尺寸／fps／格數）、授權＋署名；include_code:true 連原始碼"
+    },
+    {
+     "name": "preview_motion_template",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "伺服器出範本靜幀（免費；即係分鏡，入 Storyboard 資料夾）"
+    },
+    {
+     "name": "render_motion_template",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用戶批咗分鏡先出片（按秒收費，同 export_motion_draft 一樣；帶 preview_job_id；transparent:true = 透明底 ProRes 疊片用）"
+    },
+    {
+     "name": "render_paper_reel",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "motion_render_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "cancel_motion_render",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "fork_motion_template",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "複製範本原始碼做用戶自己一份（props 改唔到想要嘅效果就用；保留原本動態、改內容／設計）→ edit_motion_fork（patches find/replace、files 加 helper、meta 改尺寸／秒數；編譯唔過唔存、回 where）→ preview_motion_template {fork_id} → 批咗 render_motion_template {fork_id}（按實際算力收、先扣上限出完退差額）"
+    },
+    {
+     "name": "list_motion_forks",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "get_motion_fork",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "edit_motion_fork",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "motion_fork_source",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "restore_motion_fork",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "delete_motion_fork",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "list_scene_templates",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列 35 個現成場景範本（每格已寫好首幀＋運鏡描述，用戶揀一個就有成套分鏡）"
+    },
+    {
+     "name": "generate_scene_template",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用戶個題材唔喺 35 個入面（多數情況）→ 即場生成一套分鏡（免費，預設三格）。帶埋 id 就會接住嗰個製作續寫；想要長片就一直 call 落去，三格三格接，長度冇上限"
+    },
+    {
+     "name": "apply_scene_template",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "把範本（現成 template_id 或者即場生成嗰個 template）套落製作（免費，唔生成）"
+    },
+    {
+     "name": "estimate_cost",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "預估生成 HWT 成本卡"
+    },
+    {
+     "name": "set_shot_selection",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "記低剔咗邊幾格(免費)"
+    },
+    {
+     "name": "generate_image",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "真正出圖(扣費，成品自動顯示喺對話)"
+    },
+    {
+     "name": "generate_video",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": ""
+    },
+    {
+     "name": "create_asset",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用一張參考圖開新角色/場景/道具(免費，出 draft)"
+    },
+    {
+     "name": "process_asset",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "處理 draft 令佢變 ready(扣費)"
+    },
+    {
+     "name": "edit_asset",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "改現有資產出新版本(扣費)"
+    },
+    {
+     "name": "rename_asset",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "改名(免費)"
+    },
+    {
+     "name": "set_image_model",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "揀圖片生成引擎(免費)"
+    },
+    {
+     "name": "analyze_refs",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 睇參考圖出描述/風格 profile"
+    },
+    {
+     "name": "ad_questions",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "出創作問卷(問返用戶答)"
+    },
+    {
+     "name": "ad_prompt",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "問答→專業提示詞(image/video/packet)"
+    },
+    {
+     "name": "ad_chat",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "對話式傾創意,finalize:true 收成提示詞"
+    },
+    {
+     "name": "ad_storyboard",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "提示詞→分鏡表(逐格景別/運鏡/秒數)"
+    },
+    {
+     "name": "prompt_guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "電影感提示詞守則"
+    },
+    {
+     "name": "storyboard_plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "電影模式／高光模式／一鏡到底／電影演繹分鏡（sb_style:'cinematic'|'highlight'|'oner'|'explainer'；同 Studio Create 分鏡預覽同一個導演級拆鏡：鏡頭技巧庫＋導演推理，逐格景別／角度／運鏡／鏡頭／構圖＋出鏡角色；免費，存入用戶分鏡板）"
+    },
+    {
+     "name": "draw_storyboard",
+     "scopes": [
+      "edit",
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "將 storyboard_plan 嘅版本畫成分鏡圖（扣費，一張圖；畫好自動出動態分鏡卡，用戶撳就逐格播放）"
+    },
+    {
+     "name": "storyboard_revise",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "喺某版上面按 instruction 開新版本（免費；panel＝淨改一格），之後再 draw_storyboard"
+    },
+    {
+     "name": "storyboard_video",
+     "scopes": [
+      "edit",
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "冇源片出片：用分鏡版本嘅角色／場景／道具＋分鏡圖做參考，逐格跟分鏡生成影片（扣費；要先 draw_storyboard）"
+    },
+    {
+     "name": "create_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開 Director 製作"
+    },
+    {
+     "name": "save_storyboard",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "寫入分鏡(轉待批核)"
+    },
+    {
+     "name": "accept_storyboard",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用戶批核後開閘出片"
+    },
+    {
+     "name": "set_production_video_model",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "換出片模型"
+    },
+    {
+     "name": "montage_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "逐格 keyframe 拼圖(免費,出片前審)"
+    },
+    {
+     "name": "record_clip",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "記低某格進度"
+    },
+    {
+     "name": "finalize_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "收貨整條片（一次過出好嗰條）"
+    },
+    {
+     "name": "stitch_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "逐格 clip 串成成品（免費；剔咗要出嘅格全部 record_clip 咗先得，缺格會講明）"
+    },
+    {
+     "name": "delete_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "刪製作"
+    },
+    {
+     "name": "get_av_plan",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "睇返份影音計劃（節奏／旁白／配樂／響度）"
+    },
+    {
+     "name": "set_av_plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "寫入計劃（免費，回警告）"
+    },
+    {
+     "name": "check_shot_plan",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "免費驗一次：捉「每格都差唔多」（重複）＋每格片長夾唔夾到目標總長"
+    },
+    {
+     "name": "plan_music",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "寫配樂段落 cues（免費；逐段一個來源，長片分段用；generate+text 一定要有 prompt_seed）"
+    },
+    {
+     "name": "preview_narration",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "試一句音（要 shot，細錢）"
+    },
+    {
+     "name": "synthesize_narration",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "合成成套旁白（要 confirm:true）"
+    },
+    {
+     "name": "mix_and_finalize",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "本地混音收貨（免費）"
+    },
+    {
+     "name": "list_folders",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "資料夾整理"
+    },
+    {
+     "name": "create_folder",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "資料夾整理"
+    },
+    {
+     "name": "move_to_folder",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "資料夾整理"
+    },
+    {
+     "name": "use_output_as_input",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "成品轉做下次參考"
+    },
+    {
+     "name": "list_image_models",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "有咩圖片引擎"
+    },
+    {
+     "name": "upload_asset",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "由 url/base64 入素材庫"
+    },
+    {
+     "name": "ig_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "IG 連咗未"
+    },
+    {
+     "name": "social_accounts",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "各平台(IG/Threads/Facebook…)連咗未＋connect_url"
+    },
+    {
+     "name": "ig_recent_media",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "IG 最近帖同表現"
+    },
+    {
+     "name": "ig_list_posts",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "行事曆上嘅帖(platform 篩)"
+    },
+    {
+     "name": "ig_schedule_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "排帖(出街要 confirm:true)"
+    },
+    {
+     "name": "ig_update_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "改/刪排程"
+    },
+    {
+     "name": "ig_delete_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "改/刪排程"
+    },
+    {
+     "name": "ig_publish_now",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "即刻出街(要 confirm:true)"
+    },
+    {
+     "name": "ig_caption",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 寫 caption+hashtags(唔會出街)"
+    },
+    {
+     "name": "ig_autoplan",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "自動排程設定"
+    },
+    {
+     "name": "blog_styles",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "SEO 封面圖風格（13 款）＋構圖＋封面單價"
+    },
+    {
+     "name": "blog_sites",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅 blog（設定＋嵌入碼）"
+    },
+    {
+     "name": "blog_site_save",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開／改 blog 設定（網域白名單、主題、版面、語言、品牌、brand_md 品牌指南）"
+    },
+    {
+     "name": "blog_list_posts",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "行事曆上嘅 SEO 文章"
+    },
+    {
+     "name": "blog_create_post",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "排一篇 SEO 文章(generate:true 即寫文＋出封面，收封面費；到鐘自動上 feed，要 confirm:true)"
+    },
+    {
+     "name": "blog_update_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "改題目／時間／文章(要 confirm:true)"
+    },
+    {
+     "name": "blog_delete_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "刪(要 confirm:true)"
+    },
+    {
+     "name": "blog_generate",
+     "scopes": [
+      "spend",
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "重新生成(only=article|image，收費要 confirm:true)"
+    },
+    {
+     "name": "blog_embed_code",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "嵌入碼(script／iframe／feed／RSS)"
+    },
+    {
+     "name": "social_comments",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "帖子留言／回覆（IG、Facebook 專頁連訪客貼文、Threads；帶 conversation_of=Threads 一條回覆嘅完整對話）"
+    },
+    {
+     "name": "social_insights",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "帳號＋逐篇數據（觸及／瀏覽／互動／粉絲；days 最多 30）"
+    },
+    {
+     "name": "social_reply",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "以帳號身分公開回覆留言(要 confirm:true，target_id+text)"
+    },
+    {
+     "name": "social_hide",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "隱藏/取消隱藏留言(hidden:false 取消)"
+    },
+    {
+     "name": "social_delete",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "刪留言(要 confirm:true；Threads 唔俾刪，只可以 hide)"
+    },
+    {
+     "name": "social_like",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "以專頁身分讚好留言(只限 Facebook)"
+    },
+    {
+     "name": "social_dm_flows",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "留言自動 DM 流程清單（Chat Gate Instagram；有人留言 → 私訊＋按掣，最後交 AI）"
+    },
+    {
+     "name": "social_dm_flow_save",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "新增／修改流程(要 confirm:true；flow={media_id?,trigger:'all'|'keyword',keywords,public_reply?,steps:[{id,text,buttons:[{title,goto|url}],handoff}]})"
+    },
+    {
+     "name": "social_dm_flow_enable",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開／停一條流程(flow_id+enabled)"
+    },
+    {
+     "name": "brand_list_posts",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "品牌 feed"
+    },
+    {
+     "name": "brand_create_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "發公開貼(要 confirm:true)"
+    },
+    {
+     "name": "brand_delete_post",
+     "scopes": [
+      "publish"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "刪自己嘅貼"
+    },
+    {
+     "name": "motion_direct",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 導演（brief／script（SRT／VTT／`0:05 句`）／reference（參考拆解 id 或草稿 id）→ 分段、品牌、逐場寫、檢查、出片；背景 job；AI 導演經平台文字模型按實際 token 扣 HWT，實數見帳單紀錄；回 job_id、status、question、gate）"
+    },
+    {
+     "name": "motion_direct_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "問進度（job_id）"
+    },
+    {
+     "name": "motion_direct_reply",
+     "scopes": [
+      "edit"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "轉達用戶答案（job_id + gate_id（結果入面 gate.gate_id）+ approve，可加 notes／asset_id；平台 AI 導演續行按實際 token 扣 HWT）"
+    },
+    {
+     "name": "motion_direct_cancel",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "取消（草稿留低）。"
+    },
+    {
+     "name": "get_motion_catalog",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "動態圖像（Motion Graphic）特效說明書：effects = 全部揀得嘅效果（10 種語法、35 種藝術風格、15 款 MG 風格片、26 款發布模板、轉場、5 款配樂、5 個附帶範例），每款一句做到乜；用某一類之前帶 catalog_section（grammars／art／presets／templates／transitions／music／examples）攞嗰類嘅參數、地址同點叫（第一次做動畫先睇）"
+    },
+    {
+     "name": "list_motion_drafts",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "列動態圖像草稿"
+    },
+    {
+     "name": "get_motion_draft",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一份草稿逐元素清單（id；每個元素一個地址：s2.c3 = 第 2 場第 3 拍、s2.c3.text、s1.text.brand、s1.color.bg）"
+    },
+    {
+     "name": "motion_create",
+     "scopes": [
+      "edit"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "新做一條動畫(prompt = 白話／成段文案 → AI 分場寫，經平台文字模型按實際 token 扣 HWT；或 example = 附帶範例（motion-future／product-promo／showreel／ui-morph／visual-lesson；冇 prompt 原樣開（唔經 AI、唔扣 HWT），有 prompt = AI 照用戶內容改寫）；或 motion_template = 一款發布模板（CTA、步驟卡、對話、提示列、圖表、手機、HUD…；template_params 填參數，冇 prompt 唔經 AI）；或 preset = 一款 MG 風格片；plan_only:true = 淨係出大綱（唔開草稿）→ 用戶批咗先 motion_create {plan_id}（唔再收 AI 費）；用戶只要大綱就停喺大綱；motion_music = 配樂；可加 ratio、duration、title、edi"
+    },
+    {
+     "name": "motion_revise",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 按白話改一份(id + prompt；scene／target 指定淨係改邊場／邊個元素；經平台文字模型按實際 token 扣 HWT)"
+    },
+    {
+     "name": "motion_edit",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "按地址直接改元素(id + edits；免 AI、即時：改字／色／時間／icon／數字、加拍、刪拍、加場、換風格片、調場次)"
+    },
+    {
+     "name": "motion_open",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "喺用戶開住嘅 Studio 打開一份(id；mode:'export' = 叫佢個 Studio 出 MP4，要用戶開住 Studio)。"
+    },
+    {
+     "name": "motion_ref",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "參考拆解：用戶素材庫一條參考廣告片（asset_id；附件先 upload_asset）→ 按剪接切 3–8 段、AI 逐段睇、出一份黑白分段草稿（每段 1–2 拍：類型＋字＋時間，同原片一秒對一秒）。扣費 30–36 HWT（片長 ≤50 秒 30）；同一條片拆過 = 即回、免費；AI 睇唔到嘅段自動退返嗰份錢；最長 120 秒（長片用 in_sec／out_sec 揀一段）"
+    },
+    {
+     "name": "motion_ref_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "問拆解進度／結果（ref_id；免費）"
+    },
+    {
+     "name": "motion_ref_reread",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 重讀一段（ref_id + section，可加 hint 例「係一個有三條棒嘅圖表」；扣費 5 HWT，失敗全退）。用戶話「幫我拆解呢條廣告」→ motion_ref，回覆要精簡（幾多段、幾秒、幾多錢、邊幾段要佢睇一睇＝needs_review）；未拆完（status running）就話佢背景繼續、Studio 即時睇到，遲啲用 motion_ref_status。拆解只係抄結構同節奏：永遠唔好將參考片嘅品牌名、口號、logo 放入用戶自己條片（reference_brand_words）。收費前 > 30 HWT 或者今次對話用戶未同意過，先講價（motion_ref_quote 報價唔扣錢）。"
+    },
+    {
+     "name": "list_motion_refs",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅參考拆解（ref_id、狀態、段數、draft_id；免費）"
+    },
+    {
+     "name": "motion_ref_quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "參考拆解報價（asset_id，可加 in_sec／out_sec；唔扣錢：片長、段數、fee_hwt、有冇快取）"
+    },
+    {
+     "name": "set_motion_ref_bounds",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "拖分界重新分段（ref_id + bounds:[每段開始秒…]，第一個 = 開始、遞增、1–12 段；唔使 AI、即時、免費）"
+    },
+    {
+     "name": "delete_motion_ref",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "刪參考拆解（ref_id；佢出嘅草稿留低；要 confirm:true）"
+    },
+    {
+     "name": "list_motion_jobs",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅 AI 導演 job 清單（job_id、狀態、問緊乜、draft_id）"
+    },
+    {
+     "name": "list_motion_brands",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅品牌套件（brand_id、名、色、字體、logo）"
+    },
+    {
+     "name": "save_motion_brand",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開／改品牌套件（brand:{name, tagline?, cta?, url?, palette?:{primary, accent, bg, surface, text}（#hex）, font?, motion?: smooth|snappy|bouncy, look?: chrome|glass|paper, logo?／mark?＝素材庫 id}；帶 brand_id = 改（淨係帶要改嘅欄）；make_default:true 設做預設；免費）"
+    },
+    {
+     "name": "delete_motion_brand",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "刪品牌套件（brand_id；用過嘅草稿有自己嘅快照唔受影響；要 confirm:true）"
+    },
+    {
+     "name": "delete_motion_draft",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "刪動畫草稿（id；出咗嘅片留喺素材庫；要 confirm:true）"
+    },
+    {
+     "name": "get_motion_history",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "草稿動態（id；邊個改咗咩、一組一行，有 undo_grp／job_id 嘅組撤銷得；免費）"
+    },
+    {
+     "name": "list_motion_versions",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "草稿版本（id；自動快照＋命名；加 version_id = 睇嗰個版本嘅大綱）"
+    },
+    {
+     "name": "save_motion_version",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "存命名版本（id + label）"
+    },
+    {
+     "name": "restore_motion_version",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "還原去某個版本（id + version_id；之後可以 undo_motion 撤返）"
+    },
+    {
+     "name": "undo_motion",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "撤銷（id + undo_grp（motion_edit／restore_motion_version 回嘅，淨係撤得自己嗰下）或者 job_id（成個 AI 導演 job）；redo:true = 重做）。用品牌：motion_create／motion_direct 加 brand_id（或 'default'）→ 模板自動套名／口號／CTA／logo，AI 寫跟佢嘅色同字體。出咗 MP4 嘅草稿：list_motion_drafts 有 asset_id（或者 export_motion_draft／motion_export_status 回嘅 asset_id／output_id）→ studio_outputs.get {asset_ids:[asset_id]}（或 {output_ids:[output_id]}）攞下載連結。"
+    },
+    {
+     "name": "export_motion_draft",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "伺服器出片：草稿 → MP4 入用戶素材庫（id；motion_resolution 720p／1080p（預設 1080p）、motion_fps 30／60；同 Studio 出片一格一格一樣，連配樂，出完驗證播得先入庫；唔使用戶開住 Studio。💰 按片長收費：每秒 30 HWT（片長進位；結果 fee_hwt 係實數），出錯／取消全額退；同一份草稿（內容、解像度、影格率都一樣）出過嘅成品仲喺度 → 即回 cached、唔扣錢。同一個帳戶同時一條、片長有上限（too_long 帶 max_sec）；wait 預設 true = 等一陣，未出完回 running＋job_id）"
+    },
+    {
+     "name": "motion_export_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "伺服器出片進度／結果（job_id；done 有 asset_id 或 output_id → studio_outputs.get 攞下載連結）"
+    },
+    {
+     "name": "cancel_motion_export",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "取消伺服器出片（job_id；乜都唔會入庫）。"
+    }
+   ]
+  },
+  {
+   "name": "studio_project",
+   "description": "Editor projects: list, open, create from a brief/template, settings, review→rendering, versions.\nActions:\n- list: List your editor projects\n- get: Full project: settings, shots, stills, overlays, av_plan, final output\n- create: New project without a source video. body: {origin: template|brief|production, template_id|brief|production_id, ratio?, workflow?, shot_count?, language?}\n- analyze 💰: Reverse a reference video into an editable project. body: {source, title?, mode?, chunk_sec?, language?}\n- composite: Compose mode: build a new free project from already-rendered shots of other projects. body: {title?, pieces:[{rid, n, in?, out?}], audio?: clip|music|both, unify?: bool, strength?: 0-1, join?: none|fade|smooth}\n- settings: Change workflow, resolution, ratio, gen_mode, vo_language, title, refs…\n- replan: Re-cut a reference-video project's shot grid without re-analysing (review only; shot text is inherited by time overlap). body: {mode: fixed|merge|trim, chunk_sec, workflow}\n- reblueprint: Re-extract per-shot subject / location / on-screen text when the analysis left them empty (free, does not re-watch the video)\n- notes: Turn the analysed transcript and shots into study notes (free, no re-analysis). body: {focus?, language?}\n- start: review → rendering (shots can be generated after this)\n- reopen: done/error → review\n- variant: Clone as another language version. body: {language}\n- translate: Translate voice-over and on-screen text. body: {language|languages}\n- checkpoint: Save a restorable version. body: {note}\n- versions: List saved versions\n- restore: Restore a saved version\n- version_fields: Per-shot text fields of a saved version (compare an old version with the current shots; read-only)\n- delete_version: Delete one saved version\n- lint: Prompt lint (read-only)\n- log: Generation log\n- delete: Delete the project\n- estimate: Exact HWT price to render the project's shots. args: {only?: [n…]}\n- strip: 睇成條來源片嘅菲林條（回圖片）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "list",
+       "get",
+       "create",
+       "analyze",
+       "composite",
+       "settings",
+       "replan",
+       "reblueprint",
+       "notes",
+       "start",
+       "reopen",
+       "variant",
+       "translate",
+       "checkpoint",
+       "versions",
+       "restore",
+       "version_fields",
+       "delete_version",
+       "lint",
+       "log",
+       "delete",
+       "estimate",
+       "strip"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "version": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Director project",
+   "annotations": {
+    "title": "Director project",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "List your editor projects"
+    },
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Full project: settings, shots, stills, overlays, av_plan, final output"
+    },
+    {
+     "name": "create",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "New project without a source video. body: {origin: template|brief|production, template_id|brief|production_id, ratio?, workflow?, shot_count?, language?}"
+    },
+    {
+     "name": "analyze",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 Reverse a reference video into an editable project. body: {source, title?, mode?, chunk_sec?, language?}"
+    },
+    {
+     "name": "composite",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Compose mode: build a new free project from already-rendered shots of other projects. body: {title?, pieces:[{rid, n, in?, out?}], audio?: clip|music|both, unify?: bool, strength?: 0-1, join?: none|fade|smooth}"
+    },
+    {
+     "name": "settings",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Change workflow, resolution, ratio, gen_mode, vo_language, title, refs…"
+    },
+    {
+     "name": "replan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Re-cut a reference-video project's shot grid without re-analysing (review only; shot text is inherited by time overlap). body: {mode: fixed|merge|trim, chunk_sec, workflow}"
+    },
+    {
+     "name": "reblueprint",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Re-extract per-shot subject / location / on-screen text when the analysis left them empty (free, does not re-watch the video)"
+    },
+    {
+     "name": "notes",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Turn the analysed transcript and shots into study notes (free, no re-analysis). body: {focus?, language?}"
+    },
+    {
+     "name": "start",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "review → rendering (shots can be generated after this)"
+    },
+    {
+     "name": "reopen",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "done/error → review"
+    },
+    {
+     "name": "variant",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Clone as another language version. body: {language}"
+    },
+    {
+     "name": "translate",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Translate voice-over and on-screen text. body: {language|languages}"
+    },
+    {
+     "name": "checkpoint",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Save a restorable version. body: {note}"
+    },
+    {
+     "name": "versions",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "List saved versions"
+    },
+    {
+     "name": "restore",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Restore a saved version"
+    },
+    {
+     "name": "version_fields",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Per-shot text fields of a saved version (compare an old version with the current shots; read-only)"
+    },
+    {
+     "name": "delete_version",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Delete one saved version"
+    },
+    {
+     "name": "lint",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Prompt lint (read-only)"
+    },
+    {
+     "name": "log",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Generation log"
+    },
+    {
+     "name": "delete",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Delete the project"
+    },
+    {
+     "name": "estimate",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Exact HWT price to render the project's shots. args: {only?: [n…]}"
+    },
+    {
+     "name": "strip",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇成條來源片嘅菲林條（回圖片）"
+    }
+   ]
+  },
+  {
+   "name": "studio_shots",
+   "description": "Shot list: edit fields, reorder, pick which shots generate, approve/redo, frames, stills. render / render_all / render_frame spend HWT.\nActions:\n- patch: Edit shot fields. body: {shots:[{n, ff_desc?, motion_desc?, vo_text?, on_screen_text?, refs?, …}]}\n- reorder: body: {order:[n…]}\n- add: Append an LLM-written shot to a scene. body: {brief, refs?, after?}\n- select: Choose which shots to generate; the rest keep the source clip. body: {generate:[n…]}\n- frame_from_output: Use a library image as a frame. body: {output_id, role: first|end|mid}\n- accept: Approve a shot\n- redo: Send a shot back for another take\n- keep: Keep the source clip for this shot. body: {keep: bool}\n- import: Copy a shot from another project. body: {from_rid, from_n, with_frame?, with_clip?, with_dur?}\n- reframe: Change aspect ratio. body: {ratio, mode: crop|pad}\n- vo_suggest: Write a voice-over line for the shot\n- libclip: Put a library video into this shot. args {mode: use|ref|'', ref: {asset_id|output_id, in?}} — use = this shot plays that clip from `in` (no generation, free); ref = the clip feeds the model's video slot; '' = clear. A search_library moment's ref works as is.\n- libclip_isolate: Keep a library clip's picture and sound separately. body: {video: bool, audio: bool} (video off + audio on = generate the shot and lip-sync to the clip's sound)\n- clear_voice: Remove the user's own recorded voice from a shot\n- add_still: Cover/ending/poster card. body: {output_id, kind, after_n, dur, label?}\n- patch_still: Edit a still card\n- remove_still: Remove a still card\n- render 💰: Submit one shot (spends HWT) and return at once with its job_id — then call collect.\n- render_all 💰: Submit every pending shot that is not already generating (spends HWT); returns job ids at once — then call collect. args: {only?}\n- render_frame 💰: Submit an opening/end frame image (spends HWT); returns job_id. args: {role?}. Then collect with args.frame_jobs.\n- collect: Check submitted jobs: adopts finished clips into their shots, logs failed ones (auto-refunded). args: {frame_jobs?: [{shot, job_id}]}\n- head: 睇呢格來源片頭幀（回圖片）\n- genstrip: 睇呢格已出片嘅菲林條（回圖片）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "patch",
+       "reorder",
+       "add",
+       "select",
+       "frame_from_output",
+       "accept",
+       "redo",
+       "keep",
+       "import",
+       "reframe",
+       "vo_suggest",
+       "libclip",
+       "libclip_isolate",
+       "clear_voice",
+       "add_still",
+       "patch_still",
+       "remove_still",
+       "render",
+       "render_all",
+       "render_frame",
+       "collect",
+       "head",
+       "genstrip"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "scene": {
+      "type": "integer"
+     },
+     "shot": {
+      "type": "integer"
+     },
+     "still_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Director shots",
+   "annotations": {
+    "title": "Director shots",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "patch",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Edit shot fields. body: {shots:[{n, ff_desc?, motion_desc?, vo_text?, on_screen_text?, refs?, …}]}"
+    },
+    {
+     "name": "reorder",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "body: {order:[n…]}"
+    },
+    {
+     "name": "add",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Append an LLM-written shot to a scene. body: {brief, refs?, after?}"
+    },
+    {
+     "name": "select",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Choose which shots to generate; the rest keep the source clip. body: {generate:[n…]}"
+    },
+    {
+     "name": "frame_from_output",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Use a library image as a frame. body: {output_id, role: first|end|mid}"
+    },
+    {
+     "name": "accept",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Approve a shot"
+    },
+    {
+     "name": "redo",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Send a shot back for another take"
+    },
+    {
+     "name": "keep",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Keep the source clip for this shot. body: {keep: bool}"
+    },
+    {
+     "name": "import",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Copy a shot from another project. body: {from_rid, from_n, with_frame?, with_clip?, with_dur?}"
+    },
+    {
+     "name": "reframe",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Change aspect ratio. body: {ratio, mode: crop|pad}"
+    },
+    {
+     "name": "vo_suggest",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Write a voice-over line for the shot"
+    },
+    {
+     "name": "libclip",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Put a library video into this shot. args {mode: use|ref|'', ref: {asset_id|output_id, in?}} — use = this shot plays that clip from `in` (no generation, free); ref = the clip feeds the model's video slot; '' = clear. A search_library moment's ref works as is."
+    },
+    {
+     "name": "libclip_isolate",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Keep a library clip's picture and sound separately. body: {video: bool, audio: bool} (video off + audio on = generate the shot and lip-sync to the clip's sound)"
+    },
+    {
+     "name": "clear_voice",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Remove the user's own recorded voice from a shot"
+    },
+    {
+     "name": "add_still",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Cover/ending/poster card. body: {output_id, kind, after_n, dur, label?}"
+    },
+    {
+     "name": "patch_still",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Edit a still card"
+    },
+    {
+     "name": "remove_still",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Remove a still card"
+    },
+    {
+     "name": "render",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 Submit one shot (spends HWT) and return at once with its job_id — then call collect."
+    },
+    {
+     "name": "render_all",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 Submit every pending shot that is not already generating (spends HWT); returns job ids at once — then call collect. args: {only?}"
+    },
+    {
+     "name": "render_frame",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 Submit an opening/end frame image (spends HWT); returns job_id. args: {role?}. Then collect with args.frame_jobs."
+    },
+    {
+     "name": "collect",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Check submitted jobs: adopts finished clips into their shots, logs failed ones (auto-refunded). args: {frame_jobs?: [{shot, job_id}]}"
+    },
+    {
+     "name": "head",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇呢格來源片頭幀（回圖片）"
+    },
+    {
+     "name": "genstrip",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇呢格已出片嘅菲林條（回圖片）"
+    }
+   ]
+  },
+  {
+   "name": "studio_layers",
+   "description": "On-screen overlay layers (titles, captions, stickers) for a project.\nActions:\n- set: Replace the whole overlay layer list. body: {layers:[{recipe, at, duration, props, shot?, off?}]} (max 24)\n- list: Current layers\n- add: Append one layer. args: {recipe, at, duration, props}\n- remove: Remove layer by index. args: {index}\n- recipes: Overlay recipe catalog (ids for layers). args: {lane?: overlay|cam|edit, cat?, lang?}\n- preview: 睇某一秒疊層效果（回 PNG）。args {at}\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "set",
+       "list",
+       "add",
+       "remove",
+       "recipes",
+       "preview"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Director layers",
+   "annotations": {
+    "title": "Director layers",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "set",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Replace the whole overlay layer list. body: {layers:[{recipe, at, duration, props, shot?, off?}]} (max 24)"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Current layers"
+    },
+    {
+     "name": "add",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Append one layer. args: {recipe, at, duration, props}"
+    },
+    {
+     "name": "remove",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Remove layer by index. args: {index}"
+    },
+    {
+     "name": "recipes",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Overlay recipe catalog (ids for layers). args: {lane?: overlay|cam|edit, cat?, lang?}"
+    },
+    {
+     "name": "preview",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇某一秒疊層效果（回 PNG）。args {at}"
+    }
+   ]
+  },
+  {
+   "name": "studio_audio",
+   "description": "Audio plan: pacing, narration lines, music cues, mix. narrate spends HWT.\nActions:\n- get: Audio/video plan with summary, errors, warnings\n- set: Write the plan. 409 when it has errors. body: {plan}\n- check: Pre-generation check (free)\n- narrate 💰: Synthesize narration (TTS)\n- mix: Mix audio into the final video and run final checks\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "get",
+       "set",
+       "check",
+       "narrate",
+       "mix"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Director audio",
+   "annotations": {
+    "title": "Director audio",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Audio/video plan with summary, errors, warnings"
+    },
+    {
+     "name": "set",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Write the plan. 409 when it has errors. body: {plan}"
+    },
+    {
+     "name": "check",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Pre-generation check (free)"
+    },
+    {
+     "name": "narrate",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 Synthesize narration (TTS)"
+    },
+    {
+     "name": "mix",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Mix audio into the final video and run final checks"
+    }
+   ]
+  },
+  {
+   "name": "studio_director",
+   "description": "AI director: script, re-plan, templates, co-director turn, auto references. A restorable version is saved before each call.\nActions:\n- draft: body: {brief, keep_structure?, with_frames?, targets?}\n- plan 💰: LLM re-plan of shots. body: {brief, shots?, keep_structure?, language?, rendition?: \"cine\" (film/TV-grade rendition: cinematic move per shot)}\n- script 💰: LLM script from a brief. body: {brief, total_sec?, dry_run?, language?}\n- template: Apply a scene template. body: {template_id, shots?, keep_structure?, dry_run?}\n- smart 💰: AI co-director turn; returns ops. body: {message, sel?, language?}\n- auto_refs: Auto-assign reference assets to shots\n- auto_slots: Auto-fill reference slots. body: {shots?, overwrite?, brief?}\n- casting: Cast list for the project\n- casting_adopt: Adopt a finished casting image: saves it to the library as a character/location and binds it to the project. body: {name, job_id}\n- import_production: Import a Director production's storyboard onto this project's shots; already-paid keyframes come along free. body: {production_id, shots?: [n…], with_frames?}\n- clear_smart: Clear the AI co-director conversation (versions are kept)\n- cast: 💰 出一張選角圖（角色設定／場景）。args {name, prompt?} → job_id；之後 studio_shots collect {args:{cast_jobs:[{name, job_id}]}} 收貨＋綁落專案\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "draft",
+       "plan",
+       "script",
+       "template",
+       "smart",
+       "auto_refs",
+       "auto_slots",
+       "casting",
+       "casting_adopt",
+       "import_production",
+       "clear_smart",
+       "cast"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "AI director",
+   "annotations": {
+    "title": "AI director",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "draft",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "body: {brief, keep_structure?, with_frames?, targets?}"
+    },
+    {
+     "name": "plan",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 LLM re-plan of shots. body: {brief, shots?, keep_structure?, language?, rendition?: \"cine\" (film/TV-grade rendition: cinematic move per shot)}"
+    },
+    {
+     "name": "script",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 LLM script from a brief. body: {brief, total_sec?, dry_run?, language?}"
+    },
+    {
+     "name": "template",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Apply a scene template. body: {template_id, shots?, keep_structure?, dry_run?}"
+    },
+    {
+     "name": "smart",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 AI co-director turn; returns ops. body: {message, sel?, language?}"
+    },
+    {
+     "name": "auto_refs",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Auto-assign reference assets to shots"
+    },
+    {
+     "name": "auto_slots",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Auto-fill reference slots. body: {shots?, overwrite?, brief?}"
+    },
+    {
+     "name": "casting",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Cast list for the project"
+    },
+    {
+     "name": "casting_adopt",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Adopt a finished casting image: saves it to the library as a character/location and binds it to the project. body: {name, job_id}"
+    },
+    {
+     "name": "import_production",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Import a Director production's storyboard onto this project's shots; already-paid keyframes come along free. body: {production_id, shots?: [n…], with_frames?}"
+    },
+    {
+     "name": "clear_smart",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Clear the AI co-director conversation (versions are kept)"
+    },
+    {
+     "name": "cast",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出一張選角圖（角色設定／場景）。args {name, prompt?} → job_id；之後 studio_shots collect {args:{cast_jobs:[{name, job_id}]}} 收貨＋綁落專案"
+    }
+   ]
+  },
+  {
+   "name": "studio_export",
+   "description": "Stitch the final video, comparison export.\nActions:\n- stitch: Stitch the final video. body: {subs?, background?, shots?, preview?}\n- stitch_status: running | done | error | interrupted | none\n- split: Top/bottom comparison export (free)\n- stitch_and_wait: Start stitching the final video and return at once — then poll stitch_status.\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "stitch",
+       "stitch_status",
+       "split",
+       "stitch_and_wait"
+      ]
+     },
+     "project_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Export video",
+   "annotations": {
+    "title": "Export video",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "stitch",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Stitch the final video. body: {subs?, background?, shots?, preview?}"
+    },
+    {
+     "name": "stitch_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "running | done | error | interrupted | none"
+    },
+    {
+     "name": "split",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Top/bottom comparison export (free)"
+    },
+    {
+     "name": "stitch_and_wait",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Start stitching the final video and return at once — then poll stitch_status."
+    }
+   ]
+  },
+  {
+   "name": "studio_library",
+   "description": "Folders and the library of outputs and uploads.\nActions:\n- list: List folders\n- create: body: {name, parent?}\n- rename: body: {name}\n- delete: Delete a folder\n- move: body: {to, output_ids?, asset_ids?}\n- library: Library listing (outputs + uploads)\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "list",
+       "create",
+       "rename",
+       "delete",
+       "move",
+       "library"
+      ]
+     },
+     "folder_id": {
+      "type": "string"
+     },
+     "args": {
+      "type": "object",
+      "description": "Body / options for the action (see each action's note)."
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Library folders",
+   "annotations": {
+    "title": "Library folders",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "List folders"
+    },
+    {
+     "name": "create",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "body: {name, parent?}"
+    },
+    {
+     "name": "rename",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "body: {name}"
+    },
+    {
+     "name": "delete",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Delete a folder"
+    },
+    {
+     "name": "move",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "body: {to, output_ids?, asset_ids?}"
+    },
+    {
+     "name": "library",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Library listing (outputs + uploads)"
+    }
+   ]
+  },
+  {
+   "name": "studio_create",
+   "description": "創作模式（Create 頁 Step 1–4）＋精選影片範本：電影剪輯 cctvcut／高光剪輯 hlcut。Step 1 參考 → Step 2 分鏡板 → 揀模型／風格 → cut 出片。參考一律用 {pillar,id}／{asset_id}／{output_id}。\nActions:\n- guide: Create 頁 Step 1–4 同兩個精選範本點行、每步用邊個 action，連所有選項（模型、鉤子風格、畫面風格、角色語言、素材分工）\n- quote: 報價：args {template: cctvcut|hlcut, video:{asset_id|output_id}, clip_in?, clip_out?, refs?, model?, resolution?} → 每個模型嘅 HWT（已含範本費；有選段按選段長度）\n- storyboard: Step 2 分鏡創作（免費，AI 睇片寫分鏡）。剪輯模式：args 同 cut 一樣嘅素材；一般 Create：args {prompt, duration?, ratio?, refs?, sb_style?:'explainer'}。sb_style:'explainer' = 電影演繹／科普 3D（任何資料、人物、故事 → 寫實電影感解說片，每格一招電影轉場 shots[].ctr，同拼貼長鏡 style cine 同一套）。回 {version, plan_id, fee_hwt(=出分鏡圖價)}；回 pending 就隔 10 秒用同一組參數再 call。args.board_id 接落同一塊板。👤 角色閘：refs 冇 {pillar:'avatars'} 又配唔到名 → 回 needs_cast（已開角色揀選單：pick_url＋號碼），用戶揀咗就帶 args.cast_pick:<pick_id> 再 call；用戶講明唔使角色先帶 args.avatar:'none'。cut 一樣。\n- storyboard_draw: 💰 將一個分鏡版本畫成分鏡圖（一版一張；再出一張用 storyboard_revise 唔帶 instruction）。args {seed?, model?, draw_style?, arrows?}。draw_style：分鏡畫風 sketch（黑白素描＋海藍，預設）｜pencil｜photo（寫實攝影）｜anime｜concept｜comic｜watercolor｜previs3d；arrows：格入面畫唔畫紅藍走位箭咀（預設 false，影片模型會照抄箭咀）。model：圖片模型 id（studio.list_image_models 嘅 id，例如 <image model id>）或者 \"user\"（跟用戶「設定 → 圖片模型」）；唔填 = 分鏡預設模型。收費跟所揀模型計（needs_confirmation 會報返真價）。部分模型參考圖有上限（上限由模型決定，多出嘅會截走）。\n- storyboard_versions: 一塊分鏡板嘅全部版本（status、qc 檢查、output_id）\n- storyboard_revise: 用白話改分鏡（免費），開新版本；args {instruction}。唔帶 instruction = 原樣再抽一張（新版本）\n- storyboard_clear: ✋ 清走成塊分鏡板嘅草稿版本（分鏡圖成品留喺作品庫）。要 confirm:true\n- cut: 💰 出片（電影剪輯／高光剪輯）。args {template, video, clip_in?, clip_out?, refs?, model?, direction?, speaker_langs?, hook_style?, cast?, video_subjects?, resolution?, storyboard(用戶批咗嘅分鏡版本 id，必填), look?{style,texture}} → job_id。clip_in／clip_out（秒）＝只用源片其中一段（≤ 30 秒；源片本身可以更長，例如 search_library moment 嘅 in／out），按選段長度收；storyboard 要帶同一段。\n- cut_status: 出片進度：status queued|running|completed|error、stage、outputs[{kind: ai|split, output_id}]、summary\n- cut_recompose: AI 片已出但上下分割畫面冇出到 → 重砌（免費、冪等）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "guide",
+       "quote",
+       "storyboard",
+       "storyboard_draw",
+       "storyboard_versions",
+       "storyboard_revise",
+       "storyboard_clear",
+       "cut",
+       "cut_status",
+       "cut_recompose"
+      ]
+     },
+     "version": {
+      "type": "string",
+      "description": "分鏡版本 id"
+     },
+     "board": {
+      "type": "string",
+      "description": "分鏡板 id（storyboard 回嘅 version.board_id）"
+     },
+     "job_id": {
+      "type": "string",
+      "description": "job／分析單／出片單 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Create storyboard and cuts",
+   "annotations": {
+    "title": "Create storyboard and cuts",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Create 頁 Step 1–4 同兩個精選範本點行、每步用邊個 action，連所有選項（模型、鉤子風格、畫面風格、角色語言、素材分工）"
+    },
+    {
+     "name": "quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "報價：args {template: cctvcut|hlcut, video:{asset_id|output_id}, clip_in?, clip_out?, refs?, model?, resolution?} → 每個模型嘅 HWT（已含範本費；有選段按選段長度）"
+    },
+    {
+     "name": "storyboard",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "Step 2 分鏡創作（免費，AI 睇片寫分鏡）。剪輯模式：args 同 cut 一樣嘅素材；一般 Create：args {prompt, duration?, ratio?, refs?, sb_style?:'explainer'}。sb_style:'explainer' = 電影演繹／科普 3D（任何資料、人物、故事 → 寫實電影感解說片，每格一招電影轉場 shots[].ctr，同拼貼長鏡 style cine 同一套）。回 {version, plan_id, fee_hwt(=出分鏡圖價)}；回 pending 就隔 10 秒用同一組參數再 call。args.board_id 接落同一塊板。👤 角色閘：refs 冇 {pillar:'avatars'} 又配唔到名 → 回 needs_cast（已開角色揀選單：pick_url＋號碼），用戶揀咗就帶 args.cast_pick:<pick_id> 再 cal"
+    },
+    {
+     "name": "storyboard_draw",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 將一個分鏡版本畫成分鏡圖（一版一張；再出一張用 storyboard_revise 唔帶 instruction）。args {seed?, model?, draw_style?, arrows?}。draw_style：分鏡畫風 sketch（黑白素描＋海藍，預設）｜pencil｜photo（寫實攝影）｜anime｜concept｜comic｜watercolor｜previs3d；arrows：格入面畫唔畫紅藍走位箭咀（預設 false，影片模型會照抄箭咀）。model：圖片模型 id（studio.list_image_models 嘅 id，例如 <image model id>）或者 \"user\"（跟用戶「設定 → 圖片模型」）；唔填 = 分鏡預設模型。收費跟所揀模型計（needs_confirmation 會報返真價）。部分模型參考圖有上限（上限由模型決定，多出嘅會截走）。"
+    },
+    {
+     "name": "storyboard_versions",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一塊分鏡板嘅全部版本（status、qc 檢查、output_id）"
+    },
+    {
+     "name": "storyboard_revise",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用白話改分鏡（免費），開新版本；args {instruction}。唔帶 instruction = 原樣再抽一張（新版本）"
+    },
+    {
+     "name": "storyboard_clear",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 清走成塊分鏡板嘅草稿版本（分鏡圖成品留喺作品庫）。要 confirm:true"
+    },
+    {
+     "name": "cut",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出片（電影剪輯／高光剪輯）。args {template, video, clip_in?, clip_out?, refs?, model?, direction?, speaker_langs?, hook_style?, cast?, video_subjects?, resolution?, storyboard(用戶批咗嘅分鏡版本 id，必填), look?{style,texture}} → job_id。clip_in／clip_out（秒）＝只用源片其中一段（≤ 30 秒；源片本身可以更長，例如 search_library moment 嘅 in／out），按選段長度收；storyboard 要帶同一段。"
+    },
+    {
+     "name": "cut_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "出片進度：status queued|running|completed|error、stage、outputs[{kind: ai|split, output_id}]、summary"
+    },
+    {
+     "name": "cut_recompose",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 片已出但上下分割畫面冇出到 → 重砌（免費、冪等）"
+    }
+   ]
+  },
+  {
+   "name": "studio_clipper",
+   "description": "長片剪精華（導演門 lane）：長片 → AI 逐字聽、揀精華 → 出 9:16 直版短片。動效精剪預設「筆記解說」風格 = layout note（鉤、主題常駐、講乜 show 乜、逐字字幕、紙拼貼插畫、IG 文案）；「原本動效」= layout motion。\nActions:\n- quote: 報價：args {source:{asset_id|output_id}} → 分析價；args {clip_durs:[秒…], layout?（預設 track）, note?: {collage}} → 每段出片價\n- analyze: 💰 分析長片（逐字轉錄＋揀精華評分）。args {source:{asset_id|output_id}, count: auto|3|5|8, length: short|mid|long, title?} → id\n- list: 最近嘅分析單\n- get: 分析單狀態＋候選段（id、t0、t1、title、評分）＋已出嘅片\n- thumb: 睇候選段縮圖（回圖片）\n- render: 💰 出一段直版短片（一段一張單）。args {clip:{id,t0,t1,title}, layout: track（預設）|fit|orig|reel|motion|note（note = 動效精剪嘅「筆記解說」風格：原片完整放入舞台卡，兩人訪問都唔會切走人；頂部標題常駐、字幕逐字高亮、圖解跟住講嘅嘢出。用戶要動效精剪 → note；指明原本動效 → motion；俾咗 note 選項冇講 layout 都當 note）, note?: {theme: notebook|chalk, collage: paper（預設：抽象／比喻句開 AI 子 agent 寫紙拼貼隱喻，多收少量 LLM 費、quote 睇得到；畫面用代碼砌，冇生成圖費）|off, cta?: {keyword ≤24 字（用戶自己定，唔好代作）, gift? ≤60 字}, inserts?: [{asset_id}|{output_id}] ≤4（想用 AI 拼貼片段：先 studio_collage 出片 → studio_outputs.get 攞 output_id，按次序填入拼貼拍子）}, captions?, title?, cut_pauses?, cut_fillers?}\n- render_range: 💰 直接剪一段（唔使揀候選段）：args {source:{asset_id|output_id, in, out}（search_library moments[].ref 直接用得）, title?, layout?, note?（同 render）, captions?} → 出片單 id。條片要分析過（用返最近嗰張 ready 分析單嘅逐字稿做字幕）；未分析 → needs_analyze\n- render_status: 出片單狀態（ready 就有 output）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "quote",
+       "analyze",
+       "list",
+       "get",
+       "thumb",
+       "render",
+       "render_range",
+       "render_status"
+      ]
+     },
+     "job_id": {
+      "type": "string",
+      "description": "job／分析單／出片單 id"
+     },
+     "clip_id": {
+      "type": "string",
+      "description": "候選段 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "layout": {
+        "type": "string",
+        "enum": [
+         "track",
+         "fit",
+         "orig",
+         "reel",
+         "motion",
+         "note"
+        ],
+        "description": "render／render_range／quote：構圖（預設 track；動效精剪：note = 筆記解說風格、motion = 原本動效）"
+       },
+       "note": {
+        "type": "object",
+        "description": "layout=note 嘅選項",
+        "properties": {
+         "theme": {
+          "type": "string",
+          "enum": [
+           "notebook",
+           "chalk"
+          ],
+          "description": "notebook = 筆記白（預設）；chalk = 粉筆黑"
+         },
+         "collage": {
+          "type": "string",
+          "enum": [
+           "paper",
+           "off"
+          ],
+          "description": "paper = 紙拼貼插畫（預設）；off = 唔要"
+         },
+         "cta": {
+          "type": "object",
+          "description": "片尾留言 CTA（用戶有俾先填）",
+          "properties": {
+           "keyword": {
+            "type": "string",
+            "maxLength": 24
+           },
+           "gift": {
+            "type": "string",
+            "maxLength": 60
+           }
+          }
+         },
+         "inserts": {
+          "type": "array",
+          "maxItems": 4,
+          "description": "插入片（拼貼長鏡成片等）：[{asset_id}|{output_id}]",
+          "items": {
+           "type": "object",
+           "properties": {
+            "asset_id": {
+             "type": "string"
+            },
+            "output_id": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Clip highlights from long video",
+   "annotations": {
+    "title": "Clip highlights from long video",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "報價：args {source:{asset_id|output_id}} → 分析價；args {clip_durs:[秒…], layout?（預設 track）, note?: {collage}} → 每段出片價"
+    },
+    {
+     "name": "analyze",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 分析長片（逐字轉錄＋揀精華評分）。args {source:{asset_id|output_id}, count: auto|3|5|8, length: short|mid|long, title?} → id"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "最近嘅分析單"
+    },
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "分析單狀態＋候選段（id、t0、t1、title、評分）＋已出嘅片"
+    },
+    {
+     "name": "thumb",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇候選段縮圖（回圖片）"
+    },
+    {
+     "name": "render",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出一段直版短片（一段一張單）。args {clip:{id,t0,t1,title}, layout: track（預設）|fit|orig|reel|motion|note（note = 動效精剪嘅「筆記解說」風格：原片完整放入舞台卡，兩人訪問都唔會切走人；頂部標題常駐、字幕逐字高亮、圖解跟住講嘅嘢出。用戶要動效精剪 → note；指明原本動效 → motion；俾咗 note 選項冇講 layout 都當 note）, note?: {theme: notebook|chalk, collage: paper（預設：抽象／比喻句開 AI 子 agent 寫紙拼貼隱喻，多收少量 LLM 費、quote 睇得到；畫面用代碼砌，冇生成圖費）|off, cta?: {keyword ≤24 字（用戶自己定，唔好代作）, gift? ≤60 字}, inserts?: [{asset_id}|{output_id}] ≤4（想用"
+    },
+    {
+     "name": "render_range",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 直接剪一段（唔使揀候選段）：args {source:{asset_id|output_id, in, out}（search_library moments[].ref 直接用得）, title?, layout?, note?（同 render）, captions?} → 出片單 id。條片要分析過（用返最近嗰張 ready 分析單嘅逐字稿做字幕）；未分析 → needs_analyze"
+    },
+    {
+     "name": "render_status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "出片單狀態（ready 就有 output）"
+    }
+   ]
+  },
+  {
+   "name": "studio_talk_reel",
+   "description": "講者 Reel（動態圖像 · MG Director 範本）：一條人講嘢嘅片 → 全自動精修成 9:16 Reel：① 逐字聽寫＋剪死位（停頓、口頭禪、口吃，講過嘅字一粒都唔剪）② 摳像構圖 ③ 逐字字幕（關鍵字放大）④ 跟講嘢落點嘅動態圖文 ⑤ 人聲清理＋聲效＋響度。之後可以落導演筆記重出（一口價包 3 次）。片長 3–180 秒、一定要有人聲。\nActions:\n- guide: 流程、風格、選項、導演筆記 chips、摳像點處理\n- styles: 全部風格（id、背景、三色、字體感覺、聲效）\n- quote: 報價：args {source:{asset_id|output_id}} → fee_hwt（一口價，包 3 次重出）、片長\n- start: 💰 開單（扣一口價）。args {source:{asset_id|output_id}, style?, mode?: auto|step, captions?, sfx?, backdrop?: style|original|blur, matte?:{asset_id|output_id}, music?:{asset_id|output_id}, title?, language?, behind_word?, brands?:[string], room?:{asset_id|output_id}} → job id\n- list: 最近嘅講者 Reel（id、狀態、風格、片長、成品）\n- get: 單據：狀態、進度（第幾段）、逐字稿＋停頓口誤清單、編排（場）、報告（覆蓋率、響度、幾何）、版本（output.asset_id、cover_url）、revisions_left；連下一步建議\n- words: 逐字稿閘（review_words）：args {fix:[{i, w}] 改錯字（i = words 嘅 index）, keep_pauses:[k], keep_stumbles:[k]（想保留嘅停頓／口誤 k；其餘照剪）}\n- plan: 編排閘（review_plan）：args {keys:[{s, i}] 換句 s 嘅關鍵字做第 i 粒字, scenes:[{id, drop?, kind?, layer?: behind|front, fields?:{text|value|label|mark|items}, word_i?}]}\n- next: 過閘：review_words → 編排；review_plan → 出片（已包喺一口價）\n- notes: 導演筆記 → 出新一版（包喺一口價，共 3 次）。args {text?（例如「第 2 個場早 3 格」「字幕停耐啲」）, chip?: soft_edges|face_clear|one_idea|fire_earlier|hold_captions|hook_harder|brand_colors|range_only, range?:[開始秒, 結束秒]（淨係重出呢段）, scene?（場號 n，配 fire_earlier）, frames?（1–15，配 fire_earlier）, colors?:[\"#rrggbb\"]（配 brand_colors）}\n- cancel: 取消：未出第一版 = 取消＋全額退；出咗版之後唔郁（成品照留）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "guide",
+       "styles",
+       "quote",
+       "start",
+       "list",
+       "get",
+       "words",
+       "plan",
+       "next",
+       "notes",
+       "cancel"
+      ]
+     },
+     "job_id": {
+      "type": "string",
+      "description": "job／分析單／出片單 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Talk reel: captions, motion graphics, sound",
+   "annotations": {
+    "title": "Talk reel: captions, motion graphics, sound",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "流程、風格、選項、導演筆記 chips、摳像點處理"
+    },
+    {
+     "name": "styles",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "全部風格（id、背景、三色、字體感覺、聲效）"
+    },
+    {
+     "name": "quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "報價：args {source:{asset_id|output_id}} → fee_hwt（一口價，包 3 次重出）、片長"
+    },
+    {
+     "name": "start",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 開單（扣一口價）。args {source:{asset_id|output_id}, style?, mode?: auto|step, captions?, sfx?, backdrop?: style|original|blur, matte?:{asset_id|output_id}, music?:{asset_id|output_id}, title?, language?, behind_word?, brands?:[string], room?:{asset_id|output_id}} → job id"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "最近嘅講者 Reel（id、狀態、風格、片長、成品）"
+    },
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "單據：狀態、進度（第幾段）、逐字稿＋停頓口誤清單、編排（場）、報告（覆蓋率、響度、幾何）、版本（output.asset_id、cover_url）、revisions_left；連下一步建議"
+    },
+    {
+     "name": "words",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "逐字稿閘（review_words）：args {fix:[{i, w}] 改錯字（i = words 嘅 index）, keep_pauses:[k], keep_stumbles:[k]（想保留嘅停頓／口誤 k；其餘照剪）}"
+    },
+    {
+     "name": "plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "編排閘（review_plan）：args {keys:[{s, i}] 換句 s 嘅關鍵字做第 i 粒字, scenes:[{id, drop?, kind?, layer?: behind|front, fields?:{text|value|label|mark|items}, word_i?}]}"
+    },
+    {
+     "name": "next",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "過閘：review_words → 編排；review_plan → 出片（已包喺一口價）"
+    },
+    {
+     "name": "notes",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "導演筆記 → 出新一版（包喺一口價，共 3 次）。args {text?（例如「第 2 個場早 3 格」「字幕停耐啲」）, chip?: soft_edges|face_clear|one_idea|fire_earlier|hold_captions|hook_harder|brand_colors|range_only, range?:[開始秒, 結束秒]（淨係重出呢段）, scene?（場號 n，配 fire_earlier）, frames?（1–15，配 fire_earlier）, colors?:[\"#rrggbb\"]（配 brand_colors）}"
+    },
+    {
+     "name": "cancel",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "取消：未出第一版 = 取消＋全額退；出咗版之後唔郁（成品照留）"
+    }
+   ]
+  },
+  {
+   "name": "studio_footage",
+   "description": "素材腦：用戶上載咗嘅片／資料夾（素材集，已分析入庫）→ 一句話自動剪成片：揀最啱嘅片段、剪走重講口頭禪、補畫面、多語字幕，先出免費預覽，用戶批咗先正式出片。\nActions:\n- guide: 流程同選項\n- sets: 我嘅素材集（id、名、幾多條片、分析狀態）\n- set: 素材集詳情。args {set_id}\n- search: 喺素材集搵片段（用意思搵，唔使同字）。args {set_id, q}\n- auto: 全自動起稿（免費）：args {set_id, brief, ratio?, captions?:[lang], target_sec?, broll?, layout?} → 開剪輯單＋出免費預覽\n- edits: 剪輯單列表。args {set_id?}\n- edit_get: 剪輯單詳情（狀態、預覽、EDL）。args {edit_id}\n- edit_update: 改剪輯單：args {edit_id, edl?（成份 EDL：a 主軌、broll、captions、ratio）, name?} → 變返草稿\n- preview: 出免費預覽（低解像、有水印）。args {edit_id}\n- render: 💰 正式出片（按成片秒數收；出唔到全額退）。args {edit_id}\n- status: 出片進度。args {edit_id}\n- tighten: 精簡建議（免費）：args {clips:[{asset,in,out}]} → 剪走重講／口頭禪／長停頓\n- broll: 補畫面建議（免費、唔改單）：args {a:[{asset,in,out}], layout?} → broll 項（放入 EDL 再 edit_update）\n- broll_ai: 💰 AI 畫一張補畫面（每張另收，唔計入出片價）。args {text（嗰句講乜）, ratio?, at?, dur?}\n- broll_ai_get: AI 補畫面進度。args {job_id}\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "guide",
+       "sets",
+       "set",
+       "search",
+       "auto",
+       "edits",
+       "edit_get",
+       "edit_update",
+       "preview",
+       "render",
+       "status",
+       "tighten",
+       "broll",
+       "broll_ai",
+       "broll_ai_get"
+      ]
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Footage: auto-edit your uploaded videos",
+   "annotations": {
+    "title": "Footage: auto-edit your uploaded videos",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "流程同選項"
+    },
+    {
+     "name": "sets",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅素材集（id、名、幾多條片、分析狀態）"
+    },
+    {
+     "name": "set",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "素材集詳情。args {set_id}"
+    },
+    {
+     "name": "search",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "喺素材集搵片段（用意思搵，唔使同字）。args {set_id, q}"
+    },
+    {
+     "name": "auto",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "全自動起稿（免費）：args {set_id, brief, ratio?, captions?:[lang], target_sec?, broll?, layout?} → 開剪輯單＋出免費預覽"
+    },
+    {
+     "name": "edits",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "剪輯單列表。args {set_id?}"
+    },
+    {
+     "name": "edit_get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "剪輯單詳情（狀態、預覽、EDL）。args {edit_id}"
+    },
+    {
+     "name": "edit_update",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "改剪輯單：args {edit_id, edl?（成份 EDL：a 主軌、broll、captions、ratio）, name?} → 變返草稿"
+    },
+    {
+     "name": "preview",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "出免費預覽（低解像、有水印）。args {edit_id}"
+    },
+    {
+     "name": "render",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 正式出片（按成片秒數收；出唔到全額退）。args {edit_id}"
+    },
+    {
+     "name": "status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "出片進度。args {edit_id}"
+    },
+    {
+     "name": "tighten",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "精簡建議（免費）：args {clips:[{asset,in,out}]} → 剪走重講／口頭禪／長停頓"
+    },
+    {
+     "name": "broll",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "補畫面建議（免費、唔改單）：args {a:[{asset,in,out}], layout?} → broll 項（放入 EDL 再 edit_update）"
+    },
+    {
+     "name": "broll_ai",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 AI 畫一張補畫面（每張另收，唔計入出片價）。args {text（嗰句講乜）, ratio?, at?, dur?}"
+    },
+    {
+     "name": "broll_ai_get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 補畫面進度。args {job_id}"
+    }
+   ]
+  },
+  {
+   "name": "studio_compiler",
+   "description": "編譯器（導演門 lane）：素材＋白話 → 驗過嘅劇本 → 揀模型出片。compile／refine 會收少量分析費。\nActions:\n- options: 選單：用途、上限、導演風格、模型\n- compile: 💰 白話＋素材 → 劇本（30 秒至幾分鐘）。args {text（用 @名 指素材，@speaks(\"…\") 鎖死對白）, assets:[{name, kind, role?, note?, ref:{pillar,id}|{asset_id}|{output_id}}], seconds, aspect, shots?, creativity?, dialogue_language?, no_music?, director?}\n- refine: 💰 用白話改劇本：args = compile 嗰份 + {change}\n- adapt: 劇本 → 某模型嘅出片參數（唔出片）。args {result: compile 回嘅結果, model: <model id from list_video_models>, resolution?, aspect?}\n- run: 💰 adapt 完即提交出片。args 同 adapt → job_id（之後 job {job_id}）\n- job: 任何出片／出圖 job 嘅狀態同成品\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "options",
+       "compile",
+       "refine",
+       "adapt",
+       "run",
+       "job"
+      ]
+     },
+     "job_id": {
+      "type": "string",
+      "description": "job／分析單／出片單 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Script-to-video compiler",
+   "annotations": {
+    "title": "Script-to-video compiler",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "options",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "選單：用途、上限、導演風格、模型"
+    },
+    {
+     "name": "compile",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 白話＋素材 → 劇本（30 秒至幾分鐘）。args {text（用 @名 指素材，@speaks(\"…\") 鎖死對白）, assets:[{name, kind, role?, note?, ref:{pillar,id}|{asset_id}|{output_id}}], seconds, aspect, shots?, creativity?, dialogue_language?, no_music?, director?}"
+    },
+    {
+     "name": "refine",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 用白話改劇本：args = compile 嗰份 + {change}"
+    },
+    {
+     "name": "adapt",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "劇本 → 某模型嘅出片參數（唔出片）。args {result: compile 回嘅結果, model: <model id from list_video_models>, resolution?, aspect?}"
+    },
+    {
+     "name": "run",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 adapt 完即提交出片。args 同 adapt → job_id（之後 job {job_id}）"
+    },
+    {
+     "name": "job",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "任何出片／出圖 job 嘅狀態同成品"
+    }
+   ]
+  },
+  {
+   "name": "studio_longcut",
+   "description": "長片接駁：一句 brief → 切段草稿（免費審核）→ 背景逐段生成＋接駁成長片。\nActions:\n- plan: 切片草稿（免費，唔生成）。args {brief, target_sec, model?, resolution?, language?, audio?:{asset_id}}\n- run: 💰 提交審核過嘅 plan。args {plan:{segments, model, resolution, refs?:[{pillar,id}…], audio?:{asset_id}, subtitle_mode?}} → job_id\n- status: 長片 job 狀態（completed／error，逐段進度）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "plan",
+       "run",
+       "status"
+      ]
+     },
+     "job_id": {
+      "type": "string",
+      "description": "job／分析單／出片單 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Long video builder",
+   "annotations": {
+    "title": "Long video builder",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "切片草稿（免費，唔生成）。args {brief, target_sec, model?, resolution?, language?, audio?:{asset_id}}"
+    },
+    {
+     "name": "run",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 提交審核過嘅 plan。args {plan:{segments, model, resolution, refs?:[{pillar,id}…], audio?:{asset_id}, subtitle_mode?}} → job_id"
+    },
+    {
+     "name": "status",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "長片 job 狀態（completed／error，逐段進度）"
+    }
+   ]
+  },
+  {
+   "name": "studio_assets",
+   "description": "角色／場景／道具資產詳情：拖得落創作嘅參考清單、版本、睇封面圖、記憶、角色聲線、刪除。（列表／單個詳情／改名／揀版本／出新版本仍然係 studio 嘅 list_assets／get_asset／rename_asset／select_version／edit_asset。）\nActions:\n- ref_sources: 可以放入創作嘅參考：角色、道具、場景、風格圖（每項有 id、label、kind、cover）。args {q?}：用講嘅揀（例如「黑色盔甲武士」「海邊」），按相關度排、唔限最新 60 件；冇 q = 最新嘅清單\n- versions: 一個資產嘅全部版本（邊版 active、每版幾時出）\n- view: 睇資產圖（回圖片）。args {which: cover|ref|fullbody(角色)|aerial(場景), version?}\n- memories: 以呢個角色／場景做主角、成功生成過嘅 prompt 紀錄（延續風格用）\n- add_memory: 記低一次成功生成（之後 ad_questions／ad_prompt 會參考）。args {prompt, model?, output_id?}\n- voice: 角色有冇綁聲線（avatars）；有就回試聽連結\n- delete_voice: ✋ 刪走角色聲線錄音。要 confirm:true\n- delete: ✋ 刪除資產（收唔返）。要 confirm:true，而且一定要先問用戶\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "ref_sources",
+       "versions",
+       "view",
+       "memories",
+       "add_memory",
+       "voice",
+       "delete_voice",
+       "delete"
+      ]
+     },
+     "pillar": {
+      "type": "string",
+      "enum": [
+       "avatars",
+       "environments",
+       "items"
+      ]
+     },
+     "id": {
+      "type": "string",
+      "description": "資產 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Characters, scenes and props",
+   "annotations": {
+    "title": "Characters, scenes and props",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "ref_sources",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "可以放入創作嘅參考：角色、道具、場景、風格圖（每項有 id、label、kind、cover）。args {q?}：用講嘅揀（例如「黑色盔甲武士」「海邊」），按相關度排、唔限最新 60 件；冇 q = 最新嘅清單"
+    },
+    {
+     "name": "versions",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一個資產嘅全部版本（邊版 active、每版幾時出）"
+    },
+    {
+     "name": "view",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇資產圖（回圖片）。args {which: cover|ref|fullbody(角色)|aerial(場景), version?}"
+    },
+    {
+     "name": "memories",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "以呢個角色／場景做主角、成功生成過嘅 prompt 紀錄（延續風格用）"
+    },
+    {
+     "name": "add_memory",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "記低一次成功生成（之後 ad_questions／ad_prompt 會參考）。args {prompt, model?, output_id?}"
+    },
+    {
+     "name": "voice",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "角色有冇綁聲線（avatars）；有就回試聽連結"
+    },
+    {
+     "name": "delete_voice",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 刪走角色聲線錄音。要 confirm:true"
+    },
+    {
+     "name": "delete",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 刪除資產（收唔返）。要 confirm:true，而且一定要先問用戶"
+    }
+   ]
+  },
+  {
+   "name": "studio_outputs",
+   "description": "成品下載／預覽（所有出檔結果嘅唯一入口）：output_id／asset_id／job_id → 簽名下載連結 download_url（網上播放用 media_url）。水印跟你嘅授權，同 Studio 一模一樣。連結 2–8 小時後過期 —— 過期就再 call get 換新。\nActions:\n- get: 攞下載連結。args {output_ids?:[≤20], asset_ids?:[≤10], job_id?, wait_sec?:0–20（預設 15）}。job_id 未出完 → pending＋retry_after_sec；個別檔未準備好 → 嗰件 status pending（stage、retry_after_sec），隔一陣再 call。\n- show: 同 get 一樣，再加最多 4 張細預覽圖（回圖片）。一次最多 8 件；預覽總共 ≤72KB，放唔落嘅列喺 previews_skipped（下載連結照有）。\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "get",
+       "show"
+      ]
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "output_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "maxItems": 20,
+        "description": "成品 id（outputs[].output_id），最多 20 個"
+       },
+       "asset_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "maxItems": 10,
+        "description": "素材 id（例如長片剪精華出嘅短片），最多 10 個"
+       },
+       "job_id": {
+        "type": "string",
+        "description": "出圖／出片 job id（generate_* pending 回嘅 next.args.job_id、cut 回嘅 job_id）；同 output_ids／asset_ids 二揀一"
+       },
+       "wait_sec": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 20,
+        "description": "最多等幾多秒準備檔案（上雲／燒水印），預設 15"
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "View and download results",
+   "annotations": {
+    "title": "View and download results",
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "攞下載連結。args {output_ids?:[≤20], asset_ids?:[≤10], job_id?, wait_sec?:0–20（預設 15）}。job_id 未出完 → pending＋retry_after_sec；個別檔未準備好 → 嗰件 status pending（stage、retry_after_sec），隔一陣再 call。"
+    },
+    {
+     "name": "show",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "同 get 一樣，再加最多 4 張細預覽圖（回圖片）。一次最多 8 件；預覽總共 ≤72KB，放唔落嘅列喺 previews_skipped（下載連結照有）。"
+    }
+   ]
+  },
+  {
+   "name": "studio_storyboard",
+   "description": "動態分鏡：喺對話入面播分鏡（內嵌播放器，用戶同 agent 都控制到），等用戶批咗先出片。出片類 action 會檢查分鏡有冇經用戶批准 —— 流程：studio_create.storyboard → storyboard_draw → studio_storyboard.show → 用戶講批 → approve → studio.storyboard_video。\nActions:\n- show: 喺對話入面播動態分鏡（逐格、秒數、運鏡）。args {version?, panel?, autoplay?}。agent 可以再 call 叫播放器跳去某一格。回 shots[]、sheet_url（簽名，幾個鐘過期）。\n- approve: ✋ 記低用戶批准咗呢個分鏡版本（之後先准用佢出片）。一定要用戶睇完分鏡、明確講批先 call，帶 confirm:true。args {video_style?}：成片風格 realistic（寫實真人實拍，預設）｜film｜commercial｜anime｜animation3d｜match（跟分鏡畫風）—— 用戶講咗先帶。\n- draw: 💰 將未畫嘅分鏡版本畫成一張分鏡圖（所有格一張圖）。通常係用戶喺計劃卡撳「確認生成分鏡圖」觸發；agent 只喺用戶喺對話明講要畫先 call。args {model?, seed?, draw_style?, arrows?}（同 studio_create.storyboard_draw 一樣）。\n- revise: 用白話改分鏡（免費，開新版本，之後要 storyboard_draw 重畫）。args {instruction}；唔帶 = 原樣再抽一版。\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "show",
+       "approve",
+       "draw",
+       "revise"
+      ]
+     },
+     "board": {
+      "type": "string",
+      "description": "分鏡板 id（storyboard 回嘅 version.board_id）"
+     },
+     "version": {
+      "type": "string",
+      "description": "分鏡版本 id"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "version": {
+        "type": "string",
+        "description": "分鏡版本 id（唔填 = 最新畫好嗰版）"
+       },
+       "panel": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "show：播放器跳去第幾格（1 起；0 = 由頭）"
+       },
+       "autoplay": {
+        "type": "boolean",
+        "description": "show：自動播（預設 true）"
+       },
+       "draw_style": {
+        "type": "string",
+        "enum": [
+         "sketch",
+         "pencil",
+         "photo",
+         "anime",
+         "concept",
+         "comic",
+         "watercolor",
+         "previs3d"
+        ],
+        "description": "draw：分鏡畫風（預設 sketch＝黑白素描＋海藍）"
+       },
+       "arrows": {
+        "type": "boolean",
+        "description": "draw：格入面畫紅藍走位箭咀（預設 false）"
+       },
+       "video_style": {
+        "type": "string",
+        "enum": [
+         "realistic",
+         "film",
+         "commercial",
+         "anime",
+         "animation3d",
+         "match"
+        ],
+        "description": "approve：成片風格（預設 realistic＝寫實真人實拍）"
+       },
+       "instruction": {
+        "type": "string",
+        "description": "revise：用戶點改（原話）；唔填 = 原樣再抽一版"
+       },
+       "lang": {
+        "type": "string",
+        "description": "show：計劃卡文字語言（BCP-47，例如 zh-HK；唔填 = 帳戶介面語言）"
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Storyboard player",
+   "annotations": {
+    "title": "Storyboard player",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "show",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "喺對話入面播動態分鏡（逐格、秒數、運鏡）。args {version?, panel?, autoplay?}。agent 可以再 call 叫播放器跳去某一格。回 shots[]、sheet_url（簽名，幾個鐘過期）。"
+    },
+    {
+     "name": "approve",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 記低用戶批准咗呢個分鏡版本（之後先准用佢出片）。一定要用戶睇完分鏡、明確講批先 call，帶 confirm:true。args {video_style?}：成片風格 realistic（寫實真人實拍，預設）｜film｜commercial｜anime｜animation3d｜match（跟分鏡畫風）—— 用戶講咗先帶。"
+    },
+    {
+     "name": "draw",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 將未畫嘅分鏡版本畫成一張分鏡圖（所有格一張圖）。通常係用戶喺計劃卡撳「確認生成分鏡圖」觸發；agent 只喺用戶喺對話明講要畫先 call。args {model?, seed?, draw_style?, arrows?}（同 studio_create.storyboard_draw 一樣）。"
+    },
+    {
+     "name": "revise",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用白話改分鏡（免費，開新版本，之後要 storyboard_draw 重畫）。args {instruction}；唔帶 = 原樣再抽一版。"
+    }
+   ]
+  },
+  {
+   "name": "studio_cast",
+   "description": "角色揀選：出分鏡／出片之前問用戶用角色庫邊個角色做主角。支援 MCP Apps 嘅 host 會彈角色卡（有相，撳一下就揀）；其他 host 俾用戶開 pick_url 網頁揀，或者用戶答號碼由你 choose。揀好之後分鏡／出片帶 args.cast_pick:<pick_id>。\nActions:\n- pick: 開一張角色揀選單（所有 ready 角色，或者 args.ids 指定嗰幾個）。回 pick_id、pick_url、編號候選、縮圖。\n- show: 再彈一次揀選單（needs_cast 回嘅 pick_id）。args {pick_id}\n- choose: 記低用戶揀咗邊個（內嵌卡自己會 call；用戶喺對話答號碼／名就由你 call）。args {pick_id, ids?|ns?|none?}\n- thumbs: （揀選卡用）攞候選角色縮圖。args {pick_id}\n- result: 睇用戶揀咗未（網頁／內嵌卡揀完 agent 用呢個攞結果）。args {pick_id} → status waiting|chosen、refs\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "pick",
+       "show",
+       "choose",
+       "thumbs",
+       "result"
+      ]
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "pick_id": {
+        "type": "string",
+        "description": "揀選單 id（needs_cast／pick 回嘅 pick_id）"
+       },
+       "ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "pick：只俾呢幾個角色 id 揀；choose：用戶揀咗嘅角色 id"
+       },
+       "ns": {
+        "type": "array",
+        "items": {
+         "type": "integer"
+        },
+        "description": "choose：用戶答嘅號碼（1 起）"
+       },
+       "none": {
+        "type": "boolean",
+        "description": "choose：用戶講明唔使角色"
+       },
+       "purpose": {
+        "type": "string",
+        "description": "pick：揀嚟做乜（顯示俾用戶睇）"
+       },
+       "multi": {
+        "type": "boolean",
+        "description": "pick：准揀多過一個（最多 4）"
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Pick a character",
+   "annotations": {
+    "title": "Pick a character",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "pick",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開一張角色揀選單（所有 ready 角色，或者 args.ids 指定嗰幾個）。回 pick_id、pick_url、編號候選、縮圖。"
+    },
+    {
+     "name": "show",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "再彈一次揀選單（needs_cast 回嘅 pick_id）。args {pick_id}"
+    },
+    {
+     "name": "choose",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "記低用戶揀咗邊個（內嵌卡自己會 call；用戶喺對話答號碼／名就由你 call）。args {pick_id, ids?|ns?|none?}"
+    },
+    {
+     "name": "thumbs",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "（揀選卡用）攞候選角色縮圖。args {pick_id}"
+    },
+    {
+     "name": "result",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "睇用戶揀咗未（網頁／內嵌卡揀完 agent 用呢個攞結果）。args {pick_id} → status waiting|chosen、refs"
+    }
+   ]
+  },
+  {
+   "name": "studio_confirm",
+   "description": "花錢批核卡：任何 action 回 needs_confirmation＋confirm_token 之後，call show 喺對話入面彈報價卡（價錢、做咩、5 分鐘倒數、批准／不批准掣），跟住即刻 call wait {confirm_token} 等用戶撳（最多 50 秒一次，未決定就再 call）。wait 回 approved → 用完全相同參數＋confirm_token 再 call；declined → 唔好做。用戶喺對話親口講批／唔批一樣算。唔支援 MCP Apps 嘅 host：照讀返價錢問用戶。權限卡：任何 call 回 needs_permission＋permission_token（用戶批核規則要先問）之後，一樣 call show {permission_token} 再 wait，用戶撳允許先用完全相同參數＋permission_token 再 call。🔐 approval:\"user\"（預設）嘅 token 一定要用戶喺 approve_url（AlgoHash 登入頁）親自批；agent 自己 decide 批唔到，對話講「批」都唔算。\nActions:\n- show: 彈報價批核卡（confirm_token）或者權限卡（permission_token）。args {confirm_token|permission_token, summary?, what?}。唔會扣錢、唔會用咗個 token。\n- decide: （報價卡／權限卡專用 —— 用戶撳掣時由卡 call；agent 唔好自己 call）記低用戶決定。args {confirm_token|permission_token, decision:'approve'|'decline'}。要真人批嘅 token（approval:\"user\"）呢度只可以 decline；批准一定要用戶喺 approve_url 頁撳。\n- wait: show 完卡即刻 call：等用戶喺卡撳批准／不批准（最多 50 秒；未決定回 open，再 call 一次或者問用戶）。args {confirm_token|permission_token, timeout_sec?}\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "show",
+       "decide",
+       "wait"
+      ]
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "confirm_token": {
+        "type": "string",
+        "description": "needs_confirmation 回嘅 confirm_token"
+       },
+       "permission_token": {
+        "type": "string",
+        "description": "needs_permission 回嘅 permission_token（mcq_…）"
+       },
+       "summary": {
+        "type": "string",
+        "description": "用用戶語言講今次會整乜（例如「10 秒 480p 直版產品片，主角 IMG_4231」）"
+       },
+       "what": {
+        "type": "string",
+        "description": "短標題（例如「出片」「畫分鏡圖」）；唔填就用 tool.action"
+       },
+       "decision": {
+        "type": "string",
+        "enum": [
+         "approve",
+         "decline"
+        ],
+        "description": "decide（卡專用）：用戶撳咗邊個掣"
+       },
+       "timeout_sec": {
+        "type": "integer",
+        "description": "wait：最多等幾秒（5–50，預設 50）"
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Confirm a spend",
+   "annotations": {
+    "title": "Confirm a spend",
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "show",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "彈報價批核卡（confirm_token）或者權限卡（permission_token）。args {confirm_token|permission_token, summary?, what?}。唔會扣錢、唔會用咗個 token。"
+    },
+    {
+     "name": "decide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "（報價卡／權限卡專用 —— 用戶撳掣時由卡 call；agent 唔好自己 call）記低用戶決定。args {confirm_token|permission_token, decision:'approve'|'decline'}。要真人批嘅 token（approval:\"user\"）呢度只可以 decline；批准一定要用戶喺 approve_url 頁撳。"
+    },
+    {
+     "name": "wait",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "show 完卡即刻 call：等用戶喺卡撳批准／不批准（最多 50 秒；未決定回 open，再 call 一次或者問用戶）。args {confirm_token|permission_token, timeout_sec?}"
+    }
+   ]
+  },
+  {
+   "name": "studio_browse",
+   "description": "素材庫卡：喺對話入面彈用戶嘅角色／場景／道具／作品（有縮圖、可以搜尋），用戶撳揀幾個再撳「用作參考」，揀咗嘅會以對話訊息傳返嚟（avatars/<id>、output_id <id>），你放入 refs。冇 MCP Apps 嘅 host 就讀 text 清單。\nActions:\n- show: 彈素材庫卡。args {pillar?: avatars|environments|items|outputs}。回清單（最新 60 個）。\n- list: （素材庫卡用）攞某個分頁清單。args {pillar}\n- thumbs: （素材庫卡用）攞縮圖 data URI。args {pillar, ids:[≤24]}\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "show",
+       "list",
+       "thumbs"
+      ]
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。",
+      "properties": {
+       "pillar": {
+        "type": "string",
+        "enum": [
+         "avatars",
+         "environments",
+         "items",
+         "outputs"
+        ],
+        "description": "show／list：開邊個分頁（預設 avatars）"
+       },
+       "ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "maxItems": 24,
+        "description": "thumbs：要縮圖嘅 id（卡自己 call）"
+       }
+      }
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Browse your library",
+   "annotations": {
+    "title": "Browse your library",
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "show",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "彈素材庫卡。args {pillar?: avatars|environments|items|outputs}。回清單（最新 60 個）。"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "（素材庫卡用）攞某個分頁清單。args {pillar}"
+    },
+    {
+     "name": "thumbs",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "（素材庫卡用）攞縮圖 data URI。args {pillar, ids:[≤24]}"
+    }
+   ]
+  },
+  {
+   "name": "studio_collage",
+   "description": "拼貼長鏡（Director 模式／Create 卡）：一段旁白 → 每句一個視覺隱喻 → 半調黑白相片剪紙＋色卡喺平塗色紙上逐件砌出嚟嘅定格動畫。flow 模式＝一鏡到底：每句由上一句嘅畫面生出嚟，有一件「接力物件」跨過每個句界（冇硬切）；solo＝每句由空紙重新砌。閘：① 揀概念（3 揀 1）② 逐句批隱喻 ③ 逐句批靜幀 💰 ④ 出首尾幀動畫 💰 ⑤ 免費接片＋驗收。文字 AI 按 token 收少量；出圖出片同 Studio 一樣價（quote 先報）。成片冇聲軌：旁白／音樂之後自己疊。AI 導演：auto {brief, budget_hwt} 一句 brief 由頭做到尾（寫旁白、揀概念、代批、出圖出片、接片、驗收），之後 loop auto_step。\nActions:\n- guide: 一頁流程說明：閘、模式、模型＋秒數、每步用邊個 action、出錯點算\n- options: 可揀嘅動畫模型（秒數範圍、檔次、而家行唔行得）、比例、模式、靜幀解像度\n- auto: AI 導演。開新一份：args {brief（想拍乜：產品／主題、觀眾、想佢哋記住乜；4–1500 字）, budget_hwt（出圖出片預算上限，必填）, seconds?: 10–90（預設 30；每 5 秒一句，3–12 句）, mode?, aspect?, video_wf?, video_res?, still_res?, language?, title?, style?（cine = 科普 3D 電影演繹）, ref_trans?, ref_grammar?} → board_id；背景 AI 寫旁白 → 三個概念 → 評分揀最好 → 寫逐句（20–60 秒），之後 loop auto_step。帶 board_id = 改現有一份：args {on?: true|false（開／暫停；手動做緊嘅舊稿都交得俾 AI 導演）, budget_hwt?}\n- auto_step: 💰 AI 導演行下一步：免費步驟（代批、收貨、接片、驗收）server 自己行；要出圖出片就喺預算內開單（超過門檻回 confirm）。回 do: wait（隔 next 講嘅秒數再 call）｜done（film_output_id、qa_verdict）｜stop（why；同用戶講）｜paused；連 spent_hwt／left_hwt／lines[] 進度／log_tail\n- plan: 開新一份：args {text（旁白，每行一句或者一段過；最多 12 句／3000 字）, mode?: flow|solo（預設 flow）, aspect?: 9:16|16:9|1:1, title?, language?（概念同隱喻用咩語言寫，預設跟旁白）, brief?（品牌／受眾／唔要乜）, video_wf?（options.models[].id，預設由伺服器揀；exact_frames=false 嘅係參考式，平啲但首尾格唔保證逐格對上）, video_res?, still_res?: 1K|2K|4K, hold_sec?（尾段定格 0–3）, style?（options.styles[].id 風格模板，預設 paper）, narrate?（預設 true：旁白稿入片 prompt，由出片模型原生讀）, voice?（options.voices[].id）, voice_ref?: {media_name, kind: audio|video}（聲線參考，要 options.voice_ref_models）, assets?: [{media_name, kind: image|logo|product|person, label}]（最多 4 張，編劇會放入畫面）, ref_trans?: [options.transitions[].id]（style cine：參考片學返嚟嘅轉場次序）, ref_grammar?（參考片剪接文法，英文）} → board_id；背景寫三個概念（10–40 秒）。style:'cine' = 科普 3D 電影演繹模式（寫實 CGI、運鏡、每句 beats.trans 轉場；任何資料／人物／故事都拍得）\n- replan: 重新出三個概念（清走逐句）。args 可以改 {text, brief, mode, aspect, language, title}\n- list: 我嘅拼貼長鏡（id、狀態、句數、批咗幾多、有幾多張靜幀／條動畫、成片 output_id）\n- get: 一份嘅全部：status、concepts[]、pick、beats[]（每句 line／meaning／thesis／objects／carry／bg／sec／approved／still{output_id, ok, stale, job, err}／video{…}）、film、qa；連下一步建議\n- pick: 揀概念：args {concept: 0|1|2} → 背景寫逐句隱喻（10–40 秒；已有逐句會成批重寫）\n- revise: 按一句筆記重寫一句隱喻：args {n, note}（例如「唔好用時鐘，用沙漏」）。重寫完要重新批\n- edit: 直接改（唔經 AI、免費）：args {params?: {aspect, mode, video_wf, video_res, still_res, hold_sec, title}, beats?: [{n, meaning?, thesis?, objects?:[3–6 件], order?, carry?, mood?, bg?:'#RRGGBB', accents?, sec?, visual_en?, motion_en?, carry_en?, trans?（style cine：options.transitions[].id）, approved?}]}。回應講明邊啲靜幀／動畫因此過期\n- approve: 成批批：args {what: beats|stills, ns?:[句號]（唔帶 = 全部）, ok?: false（撤回）}。靜幀淨係批得有圖嗰啲（冇圖嘅回 skipped）\n- quote: 報價（唔扣錢）：args {what: stills|videos, ns?} → 每句 fee_hwt＋total_hwt＋點解有啲句出唔到（skipped）\n- render_stills: 💰 出靜幀（每句一張完成構圖；Image 1 = 底色紙，flow 模式 Image 2 = 上一句靜幀）。args {ns?:[句號]（唔帶 = 所有已批隱喻但未有／過咗期嘅）, refs?:[{asset_id|output_id|pillar,id, label}]（最多 3 張要入鏡嘅產品／角色）, seed?} → job ids；之後 collect\n- render_videos: 💰 出首尾幀動畫（每句一條；solo／第 1 句 = 空紙 → 靜幀，flow = 上一句靜幀 → 今句靜幀）。args {ns?}（唔帶 = 所有靜幀已批但未有／過咗期嘅）→ job ids；之後 collect\n- collect: 收貨：查已開單嘅靜幀／動畫，出咗就收落嗰句（collected[]），失敗嘅記低原因（錢自動退）\n- adopt: 用作品庫現有嘅成品做某句嘅靜幀／動畫：args {n, what: still|video, output_id}\n- view: 睇對照圖（回圖片）：每句一行 = 動畫首幀／中間／尾幀／靜幀。用嚟俾用戶批靜幀、或者自己檢查接駁\n- film: 免費接成一條：args {hold_sec?（尾段定格 0–3）}。冇動畫嘅句會跳過（回 missing）；背景接，get 睇 film.status\n- qa: 驗收：legs[] = empty_start（首幀係咪空紙）、end_match（尾幀貼唔貼靜幀）、carry（flow 接駁位）、rhythm（句長有冇變化）、rest（尾段定格）、silent（冇聲軌）；每條 pass|warn|fail＋出事嘅句號 items；verdict\n- delete: ✋ 刪呢份（作品庫入面嘅靜幀／動畫／成片唔會刪）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "guide",
+       "options",
+       "auto",
+       "auto_step",
+       "plan",
+       "replan",
+       "list",
+       "get",
+       "pick",
+       "revise",
+       "edit",
+       "approve",
+       "quote",
+       "render_stills",
+       "render_videos",
+       "collect",
+       "adopt",
+       "view",
+       "film",
+       "qa",
+       "delete"
+      ]
+     },
+     "board_id": {
+      "type": "string",
+      "description": "plan 回嘅 id（拼貼長鏡 cf_…、拼貼紙解釋 pp_…）"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Collage Flow: voiceover to paper-collage film",
+   "annotations": {
+    "title": "Collage Flow: voiceover to paper-collage film",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一頁流程說明：閘、模式、模型＋秒數、每步用邊個 action、出錯點算"
+    },
+    {
+     "name": "options",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "可揀嘅動畫模型（秒數範圍、檔次、而家行唔行得）、比例、模式、靜幀解像度"
+    },
+    {
+     "name": "auto",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 導演。開新一份：args {brief（想拍乜：產品／主題、觀眾、想佢哋記住乜；4–1500 字）, budget_hwt（出圖出片預算上限，必填）, seconds?: 10–90（預設 30；每 5 秒一句，3–12 句）, mode?, aspect?, video_wf?, video_res?, still_res?, language?, title?, style?（cine = 科普 3D 電影演繹）, ref_trans?, ref_grammar?} → board_id；背景 AI 寫旁白 → 三個概念 → 評分揀最好 → 寫逐句（20–60 秒），之後 loop auto_step。帶 board_id = 改現有一份：args {on?: true|false（開／暫停；手動做緊嘅舊稿都交得俾 AI 導演）, budget_hwt?}"
+    },
+    {
+     "name": "auto_step",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 AI 導演行下一步：免費步驟（代批、收貨、接片、驗收）server 自己行；要出圖出片就喺預算內開單（超過門檻回 confirm）。回 do: wait（隔 next 講嘅秒數再 call）｜done（film_output_id、qa_verdict）｜stop（why；同用戶講）｜paused；連 spent_hwt／left_hwt／lines[] 進度／log_tail"
+    },
+    {
+     "name": "plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開新一份：args {text（旁白，每行一句或者一段過；最多 12 句／3000 字）, mode?: flow|solo（預設 flow）, aspect?: 9:16|16:9|1:1, title?, language?（概念同隱喻用咩語言寫，預設跟旁白）, brief?（品牌／受眾／唔要乜）, video_wf?（options.models[].id，預設由伺服器揀；exact_frames=false 嘅係參考式，平啲但首尾格唔保證逐格對上）, video_res?, still_res?: 1K|2K|4K, hold_sec?（尾段定格 0–3）, style?（options.styles[].id 風格模板，預設 paper）, narrate?（預設 true：旁白稿入片 prompt，由出片模型原生讀）, voice?（options.voices[].id）, voice_re"
+    },
+    {
+     "name": "replan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "重新出三個概念（清走逐句）。args 可以改 {text, brief, mode, aspect, language, title}"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅拼貼長鏡（id、狀態、句數、批咗幾多、有幾多張靜幀／條動畫、成片 output_id）"
+    },
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一份嘅全部：status、concepts[]、pick、beats[]（每句 line／meaning／thesis／objects／carry／bg／sec／approved／still{output_id, ok, stale, job, err}／video{…}）、film、qa；連下一步建議"
+    },
+    {
+     "name": "pick",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "揀概念：args {concept: 0|1|2} → 背景寫逐句隱喻（10–40 秒；已有逐句會成批重寫）"
+    },
+    {
+     "name": "revise",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "按一句筆記重寫一句隱喻：args {n, note}（例如「唔好用時鐘，用沙漏」）。重寫完要重新批"
+    },
+    {
+     "name": "edit",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "直接改（唔經 AI、免費）：args {params?: {aspect, mode, video_wf, video_res, still_res, hold_sec, title}, beats?: [{n, meaning?, thesis?, objects?:[3–6 件], order?, carry?, mood?, bg?:'#RRGGBB', accents?, sec?, visual_en?, motion_en?, carry_en?, trans?（style cine：options.transitions[].id）, approved?}]}。回應講明邊啲靜幀／動畫因此過期"
+    },
+    {
+     "name": "approve",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "成批批：args {what: beats|stills, ns?:[句號]（唔帶 = 全部）, ok?: false（撤回）}。靜幀淨係批得有圖嗰啲（冇圖嘅回 skipped）"
+    },
+    {
+     "name": "quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "報價（唔扣錢）：args {what: stills|videos, ns?} → 每句 fee_hwt＋total_hwt＋點解有啲句出唔到（skipped）"
+    },
+    {
+     "name": "render_stills",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出靜幀（每句一張完成構圖；Image 1 = 底色紙，flow 模式 Image 2 = 上一句靜幀）。args {ns?:[句號]（唔帶 = 所有已批隱喻但未有／過咗期嘅）, refs?:[{asset_id|output_id|pillar,id, label}]（最多 3 張要入鏡嘅產品／角色）, seed?} → job ids；之後 collect"
+    },
+    {
+     "name": "render_videos",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出首尾幀動畫（每句一條；solo／第 1 句 = 空紙 → 靜幀，flow = 上一句靜幀 → 今句靜幀）。args {ns?}（唔帶 = 所有靜幀已批但未有／過咗期嘅）→ job ids；之後 collect"
+    },
+    {
+     "name": "collect",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "收貨：查已開單嘅靜幀／動畫，出咗就收落嗰句（collected[]），失敗嘅記低原因（錢自動退）"
+    },
+    {
+     "name": "adopt",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用作品庫現有嘅成品做某句嘅靜幀／動畫：args {n, what: still|video, output_id}"
+    },
+    {
+     "name": "view",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇對照圖（回圖片）：每句一行 = 動畫首幀／中間／尾幀／靜幀。用嚟俾用戶批靜幀、或者自己檢查接駁"
+    },
+    {
+     "name": "film",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "免費接成一條：args {hold_sec?（尾段定格 0–3）}。冇動畫嘅句會跳過（回 missing）；背景接，get 睇 film.status"
+    },
+    {
+     "name": "qa",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "驗收：legs[] = empty_start（首幀係咪空紙）、end_match（尾幀貼唔貼靜幀）、carry（flow 接駁位）、rhythm（句長有冇變化）、rest（尾段定格）、silent（冇聲軌）；每條 pass|warn|fail＋出事嘅句號 items；verdict"
+    },
+    {
+     "name": "delete",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 刪呢份（作品庫入面嘅靜幀／動畫／成片唔會刪）"
+    }
+   ]
+  },
+  {
+   "name": "studio_paper",
+   "description": "拼貼紙解釋（Paper Explainer）：一個題目 → 30 秒以內直向解說片，成個畫面係紙模型：紙背景、紙角色、紙道具逐件彈出嚟，有紙質轉場（撕紙、翻頁、燒走、印章…）、鏡頭運動、手寫標記、膠紙標題、逐字字幕、語音、音樂同聲效。圖片模型只係畫元素（洋紅底 sheet，自動去背），動畫由 Motion 做，所以唔係生成片。\n幾時用：用戶講紙模型／紙藝／剪紙／拼貼紙／paper craft／cut paper／papercraft／diorama／paper explainer／解說片／explainer reel／用紙公仔解釋產品或者概念。（用戶已經有旁白、要一鏡到底定格拼貼就用 studio_collage。）\n閘：① 批腳本場景表 ② 畫元素 💰 ③ 語音聲軌（免費）④ 批分鏡（免費靜幀）⑤ 出片 💰。一定要照 next 行；未批分鏡出唔到片。\nActions:\n- guide: 一頁流程說明＋全部動作目錄（轉場、鏡頭、效果、背景、道具、聲效、音樂）\n- options: 全部可用動作：cuts、cameras、looks、entrances、moves、effects、backdrops、props、sfx、beds、layout\n- plan: 開新一份：args {topic（想解釋乜，4–1500 字）, seconds?: 12–30（預設 30）, language?, title?, voice?, mascot?（預設 true）, backdrops?: preset|generate, bed?, still_res?: 1K|2K|4K, notes?, refs?:[{asset_id|output_id|pillar,id, label}]（產品相，最多 3 張）} → board_id；AI 背景寫腳本（文字按 token 收少量）\n- list: 我嘅拼貼紙解釋（id、題目、場數、成片 output_id）\n- get: 一份嘅全部：stage、plan（腳本、場景、元素）、art、voice、board、render；連下一步\n- revise: AI 按一句筆記重寫：args {note}。重寫完要重新批\n- edit: 直接改（唔經 AI、免費）：args {scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?}。全部名要喺 options 入面；on = say 入面嘅字，物件講到嗰個字先出\n- approve: 批：args {what: plan|board, ok?: false（撤回）}。一定要用戶親口批先 call\n- quote: 報價（唔扣錢）：args {what: art|render, keys?}\n- render_art: 💰 畫元素（每張 sheet 最多 6 件；唔帶 keys = 所有未有嘅）：args {keys?, seed?} → job ids；之後 collect\n- collect: 收貨：出咗嘅元素自動去背切件（collected／pending／failed）；畫漏嘅件會講名，再 render_art {keys} 重畫（錢自動退失敗單）\n- adopt: 用作品庫現成嘅圖做某項元素：args {key, output_id}\n- voice: 免費：合成旁白、按真語音長度排時間、出音樂同聲效：args {voice?}（背景 30–90 秒）\n- storyboard: 免費：每場一張靜幀（入 Storyboard 資料夾）。呢份 props 就係成片嘅 props\n- view: 睇聯絡表（回圖片）：args {what?: board|parts}。批分鏡之前一定要俾用戶睇\n- render: 💰 出片（按秒；超過門檻回 confirm）→ job_id；之後 get 直至 stage:'done'\n- delete: ✋ 刪呢份（元素同聲軌一齊刪；作品庫入面嘅成片唔會刪）\n💰 = 會扣 HWT。單次 > 50 HWT 第一次會回 needs_confirmation＋confirm_token，問過用戶之後用完全相同嘅參數加 confirm_token 再 call。每條 MCP key 有每日上限。",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "guide",
+       "options",
+       "plan",
+       "list",
+       "get",
+       "revise",
+       "edit",
+       "approve",
+       "quote",
+       "render_art",
+       "collect",
+       "adopt",
+       "voice",
+       "storyboard",
+       "view",
+       "render",
+       "delete"
+      ]
+     },
+     "board_id": {
+      "type": "string",
+      "description": "plan 回嘅 id（拼貼長鏡 cf_…、拼貼紙解釋 pp_…）"
+     },
+     "args": {
+      "type": "object",
+      "description": "選項（見每個 action 嘅說明）。"
+     },
+     "confirm": {
+      "type": "boolean",
+      "description": "✋ 標記嘅破壞性 action 要 true（先問用戶）。"
+     },
+     "confirm_token": {
+      "type": "string",
+      "description": "花錢確認 token（見 needs_confirmation）。"
+     },
+     "permission_token": {
+      "type": "string",
+      "description": "回咗 needs_permission 之後，用戶喺權限卡（studio_confirm.show）撳允許，先用完全相同嘅參數加呢個 token 再 call。"
+     }
+    },
+    "required": [
+     "action"
+    ]
+   },
+   "title": "Paper Explainer: topic to animated cut-paper reel",
+   "annotations": {
+    "title": "Paper Explainer: topic to animated cut-paper reel",
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   },
+   "x-actions": [
+    {
+     "name": "guide",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一頁流程說明＋全部動作目錄（轉場、鏡頭、效果、背景、道具、聲效、音樂）"
+    },
+    {
+     "name": "options",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "全部可用動作：cuts、cameras、looks、entrances、moves、effects、backdrops、props、sfx、beds、layout"
+    },
+    {
+     "name": "plan",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "開新一份：args {topic（想解釋乜，4–1500 字）, seconds?: 12–30（預設 30）, language?, title?, voice?, mascot?（預設 true）, backdrops?: preset|generate, bed?, still_res?: 1K|2K|4K, notes?, refs?:[{asset_id|output_id|pillar,id, label}]（產品相，最多 3 張）} → board_id；AI 背景寫腳本（文字按 token 收少量）"
+    },
+    {
+     "name": "list",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "我嘅拼貼紙解釋（id、題目、場數、成片 output_id）"
+    },
+    {
+     "name": "get",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "一份嘅全部：stage、plan（腳本、場景、元素）、art、voice、board、render；連下一步"
+    },
+    {
+     "name": "revise",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "AI 按一句筆記重寫：args {note}。重寫完要重新批"
+    },
+    {
+     "name": "edit",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "直接改（唔經 AI、免費）：args {scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?}。全部名要喺 options 入面；on = say 入面嘅字，物件講到嗰個字先出"
+    },
+    {
+     "name": "approve",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "批：args {what: plan|board, ok?: false（撤回）}。一定要用戶親口批先 call"
+    },
+    {
+     "name": "quote",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "報價（唔扣錢）：args {what: art|render, keys?}"
+    },
+    {
+     "name": "render_art",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 畫元素（每張 sheet 最多 6 件；唔帶 keys = 所有未有嘅）：args {keys?, seed?} → job ids；之後 collect"
+    },
+    {
+     "name": "collect",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "收貨：出咗嘅元素自動去背切件（collected／pending／failed）；畫漏嘅件會講名，再 render_art {keys} 重畫（錢自動退失敗單）"
+    },
+    {
+     "name": "adopt",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "用作品庫現成嘅圖做某項元素：args {key, output_id}"
+    },
+    {
+     "name": "voice",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "免費：合成旁白、按真語音長度排時間、出音樂同聲效：args {voice?}（背景 30–90 秒）"
+    },
+    {
+     "name": "storyboard",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "免費：每場一張靜幀（入 Storyboard 資料夾）。呢份 props 就係成片嘅 props"
+    },
+    {
+     "name": "view",
+     "scopes": [
+      "read"
+     ],
+     "spends": false,
+     "destructiveConfirm": false,
+     "returnsImage": true,
+     "summary": "睇聯絡表（回圖片）：args {what?: board|parts}。批分鏡之前一定要俾用戶睇"
+    },
+    {
+     "name": "render",
+     "scopes": [
+      "spend"
+     ],
+     "spends": true,
+     "destructiveConfirm": false,
+     "returnsImage": false,
+     "summary": "💰 出片（按秒；超過門檻回 confirm）→ job_id；之後 get 直至 stage:'done'"
+    },
+    {
+     "name": "delete",
+     "scopes": [
+      "edit"
+     ],
+     "spends": false,
+     "destructiveConfirm": true,
+     "returnsImage": false,
+     "summary": "✋ 刪呢份（元素同聲軌一齊刪；作品庫入面嘅成片唔會刪）"
+    }
+   ]
+  }
+ ]
+}

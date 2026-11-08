@@ -1,0 +1,8 @@
+# Append to ~/.codex/config.toml. Keys are read from the environment, never stored here.
+[mcp_servers.algohash-studio]
+url = "https://console.algohash.ai/mcp/studio"
+bearer_token_env_var = "ALGOHASH_STUDIO_KEY"
+
+[mcp_servers.algohash-team]
+url = "https://console.algohash.ai/mcp/team"
+bearer_token_env_var = "ALGOHASH_TEAM_KEY"

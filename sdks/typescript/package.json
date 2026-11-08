@@ -1,0 +1,19 @@
+{
+  "name": "@algohash/mcp",
+  "version": "0.1.0",
+  "description": "Typed client for the AlgoHash Studio, Team and Open API MCP servers.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=18" },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "devDependencies": { "typescript": "5.9.3", "@types/node": "22.10.2" },
+  "keywords": ["mcp", "model-context-protocol", "algohash", "agents", "sdk"]
+}

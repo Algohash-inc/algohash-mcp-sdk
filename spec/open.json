@@ -1,0 +1,113 @@
+{
+ "server": "open",
+ "serverVersion": "1.0.0",
+ "endpoint": "https://console.algohash.ai/open/v1/mcp",
+ "transport": "JSON-RPC 2.0 over HTTP POST",
+ "protocolVersions": [
+  "2024-11-05"
+ ],
+ "auth": {
+  "bearer": "Open API key (Studio → Developer → API keys)",
+  "oauth": false
+ },
+ "scopes": [],
+ "instructions": "Call list_models for the catalog, quote to price a job, generate to run it. Always quote before generating.",
+ "tools": [
+  {
+   "name": "list_models",
+   "description": "List every callable model / workflow with its price in HWT and USD.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "kind": {
+      "type": "string",
+      "description": "video | video_edit | audio | image | pipeline | analysis | utility"
+     },
+     "search": {
+      "type": "string"
+     }
+    }
+   },
+   "annotations": {
+    "readOnlyHint": true,
+    "destructiveHint": false
+   }
+  },
+  {
+   "name": "quote",
+   "description": "Price a generation before running it. Returns the exact HWT that will be deducted.",
+   "inputSchema": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "type": "string",
+      "description": "op id from list_models"
+     },
+     "args": {
+      "type": "object"
+     }
+    }
+   },
+   "annotations": {
+    "readOnlyHint": true,
+    "destructiveHint": false
+   }
+  },
+  {
+   "name": "generate",
+   "description": "Submit a generation. Charged up front; returns a job id or a submission hint. Byte-identical submissions within 15 s collapse into one job.",
+   "inputSchema": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "type": "string"
+     },
+     "inputs": {
+      "type": "object"
+     }
+    }
+   },
+   "annotations": {
+    "readOnlyHint": false,
+    "destructiveHint": false
+   }
+  },
+  {
+   "name": "job_status",
+   "description": "Check a submitted job.",
+   "inputSchema": {
+    "type": "object",
+    "required": [
+     "job_id"
+    ],
+    "properties": {
+     "job_id": {
+      "type": "string"
+     }
+    }
+   },
+   "annotations": {
+    "readOnlyHint": true,
+    "destructiveHint": false
+   }
+  },
+  {
+   "name": "balance",
+   "description": "Current HWT balance of the account that owns the key.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {}
+   },
+   "annotations": {
+    "readOnlyHint": true,
+    "destructiveHint": false
+   }
+  }
+ ]
+}

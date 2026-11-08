@@ -1,0 +1,3 @@
+# Large build inputs/outputs stay local. The background is a generated 21:9 image.
+*.png
+cover.html

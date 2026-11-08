@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "algohash-mcp"
+version = "0.1.0"
+description = "Typed client for the AlgoHash Studio, Team and Open API MCP servers."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["mcp", "model-context-protocol", "algohash", "agents", "sdk"]
+
+[tool.setuptools.packages.find]
+include = ["algohash_mcp*"]
+
+[tool.setuptools.package-data]
+algohash_mcp = ["py.typed"]

@@ -1,0 +1,23 @@
+# dependencies and builds
+node_modules/
+dist/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.venv/
+.pytest_cache/
+
+# secrets: never commit keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

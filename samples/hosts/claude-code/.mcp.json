@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "algohash-studio": {
+      "type": "http",
+      "url": "https://console.algohash.ai/mcp/studio",
+      "headers": { "Authorization": "Bearer ${ALGOHASH_STUDIO_KEY}" }
+    },
+    "algohash-team": {
+      "type": "http",
+      "url": "https://console.algohash.ai/mcp/team",
+      "headers": { "Authorization": "Bearer ${ALGOHASH_TEAM_KEY}" }
+    }
+  }
+}

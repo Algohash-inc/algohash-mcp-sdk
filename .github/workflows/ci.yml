@@ -1,0 +1,114 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: CI only reads the repository. No secrets are used anywhere in this workflow.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spec:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 22 }
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with: { go-version: stable, cache: false }
+      - name: Generated code is up to date
+        run: node tools/codegen.mjs --check
+      - name: Leak scan
+        # The private deny-list lives in a repository secret (empty on forks); the public rules always run.
+        env:
+          LEAK_SCAN_DENY: ${{ secrets.LEAK_SCAN_DENY }}
+        run: node tools/leak-scan.mjs
+      - name: Translated READMEs in step
+        run: node tools/readme-check.mjs
+
+  typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix: { node: [18, 20, 22] }
+    defaults: { run: { working-directory: sdks/typescript } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "${{ matrix.node }}" }
+      - run: npm ci --ignore-scripts
+      - run: npm test
+
+  python:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix: { python: ["3.9", "3.13"] }
+    defaults: { run: { working-directory: sdks/python } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "${{ matrix.python }}" }
+      - run: python -m unittest discover -s tests -v
+
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix: { go: ["1.21", stable] }
+    defaults: { run: { working-directory: sdks/go } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with: { go-version: "${{ matrix.go }}", cache: false }
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+
+  samples:
+    needs: [typescript, python, go]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      ALGOHASH_MOCK: "1"
+      ALGOHASH_MOCK_AUTO_APPROVE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 22 }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13" }
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with: { go-version: stable, cache: false }
+      - name: Build the TypeScript SDK
+        working-directory: sdks/typescript
+        run: npm ci --ignore-scripts && npm run build
+      - name: Start the mock server
+        run: |
+          PORT=8787 node tools/mock-server.mjs > mock.log 2>&1 &
+          for i in $(seq 1 50); do curl -s -o /dev/null -X POST http://127.0.0.1:8787/mcp/studio && break || sleep 0.2; done
+      - name: TypeScript samples
+        run: for f in samples/typescript/0*.mjs; do echo "== $f"; node "$f"; done
+      - name: Python samples
+        run: for f in samples/python/0*.py; do echo "== $f"; python "$f"; done
+      - name: Go samples
+        working-directory: samples/go
+        run: for c in cmd/*; do echo "== $c"; go run "./$c"; done
+      - name: Samples decline without a terminal
+        env: { ALGOHASH_MOCK_AUTO_APPROVE: "0" }
+        run: |
+          out=$(node samples/typescript/03-generate-image.mjs < /dev/null)
+          echo "$out"
+          echo "$out" | grep -qi declined
