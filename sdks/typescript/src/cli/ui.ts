@@ -5,7 +5,8 @@
 //   plain  — a TTY without Unicode or colour (old Windows console, NO_COLOR, TERM=dumb): same steps, ASCII only.
 //   lines  — not a TTY (pipe, CI log): one fact per line, no cursor movement, nothing redrawn.
 
-export interface Caps { tty: boolean; color: boolean; unicode: boolean; cols: number; rows: number }
+/** `cols` is clamped to 40–100 for text layout; `width` is the real terminal width. */
+export interface Caps { tty: boolean; color: boolean; unicode: boolean; cols: number; rows: number; width: number }
 
 export function detectCaps(stream: NodeJS.WriteStream = process.stdout, env: NodeJS.ProcessEnv = process.env): Caps {
   const tty = !!stream.isTTY && env.TERM !== "dumb";
@@ -20,8 +21,24 @@ export function detectCaps(stream: NodeJS.WriteStream = process.stdout, env: Nod
     unicode = env.TERM !== "linux" && (loc === "" || /utf-?8/i.test(loc));
   }
   if (env.ALGOHASH_ASCII === "1") unicode = false;
-  return { tty, color, unicode, cols: Math.max(40, Math.min(stream.columns || 80, 100)), rows: stream.rows || 24 };
+  return { tty, color, unicode, cols: Math.max(40, Math.min(stream.columns || 80, 100)), rows: stream.rows || 24, width: stream.columns || 80 };
 }
+
+// Big wordmark for wide terminals (ASCII only, so it also works without Unicode).
+const BANNER = String.raw`
+__________________________________________________________________________________________________________________________________________________
+ ______/\\\\\\______/\\\___________/\\\\\\\\\\\_____/\\\\\\\\\\\\_____/\\\_______/\\\_______/\\\\\\_______/\\\\\\\\\\\\___/\\\_______/\\\_________
+  _____/\\\//\\\____\/\\\__________/\\\////////_____/\\\////////\\\___\/\\\______\/\\\______/\\\//\\\_____/\\\/////////___\/\\\______\/\\\________
+   ____/\\\_\//\\\___\/\\\_________/\\\_____________/\\\_______\//\\\__\/\\\______\/\\\_____/\\\_\//\\\___\/\\\____________\/\\\______\/\\\_______
+    ___/\\\___\//\\\__\/\\\________\/\\\__/\\\\\\\__\/\\\________\/\\\__\/\\\\\\\\\\\\\\____/\\\___\//\\\__\//\\\\\\\\\\\\__\/\\\\\\\\\\\\\\______
+     __\/\\\____\/\\\__\/\\\________\/\\\_\///////\\_\/\\\________\/\\\__\/\\\////////\\\___\/\\\____\/\\\___\///////////\\\_\/\\\////////\\\_____
+      __/\\\_____\//\\\_\/\\\________\//\\\______\/\\_\/\\\\_______/\\\\__\/\\\______\/\\\___/\\\_____\//\\\____________\/\\\_\/\\\______\/\\\____
+       _/\\\_______\//\\\\//\\\\\\\\\\\\//\\\\\\\\\\\\_\///\\\\\\\\\\\\/___\/\\\______\/\\\__/\\\_______\//\\\_/\\\\\\\\\\\\\__\/\\\______\/\\\___
+        \///_________\///__\///////////__\////////////____\////////////_____\///_______\///__\///_________\///_\/////////////___\///_______\///___`
+  .split("\n").slice(1);
+export const BANNER_WIDTH = Math.max(...BANNER.map((l) => l.length));
+// Blue → violet ramp across the wordmark (256-colour), same family as the small header.
+const BANNER_RAMP = [39, 39, 45, 45, 75, 75, 111, 111, 147, 147, 183];
 
 const ESC = "\x1b[";
 export class Paint {
@@ -75,7 +92,36 @@ export class Screen {
   }
   blank(): void { this.line(""); }
 
-  header(right: string): void {
+  /**
+   * The big wordmark fits: a terminal at least as wide as the banner, and tall enough that the
+   * `below` rows printed after the header (for login: the full-size QR, link, code box) stay on
+   * screen. The QR matters more than the logo, so the logo gives way first.
+   */
+  bigHeader(below = 0): boolean {
+    return this.caps.tty && process.env.ALGOHASH_BANNER !== "0" && this.caps.width >= BANNER_WIDTH + 2
+      && this.caps.rows >= BANNER.length + 4 + below;
+  }
+  /** Text rows header() prints for the same `below`. */
+  headerRows(below = 0): number { return this.bigHeader(below) ? BANNER.length + 4 : 4; }
+
+  header(right: string, below = 0): void {
+    if (this.bigHeader(below)) {
+      this.blank();
+      for (const l of BANNER) {
+        if (!this.caps.color) { this.line(" " + l); continue; }
+        let s = " ";
+        for (let i = 0; i < l.length; i++) {
+          const ch = l[i];
+          if (ch === "_" || ch === " ") s += `${ESC}38;5;238m${ch}`;
+          else s += `${ESC}1;38;5;${BANNER_RAMP[Math.floor((i / BANNER_WIDTH) * BANNER_RAMP.length)]}m${ch}`;
+        }
+        this.line(s + `${ESC}0m`);
+      }
+      this.blank();
+      this.line("  " + this.p.dim(right));
+      this.blank();
+      return;
+    }
     const left = `  ${this.p.brand()}`;
     const gap = Math.max(2, Math.min(this.caps.cols, 64) - width(left) - width(right) - 2);
     this.blank();

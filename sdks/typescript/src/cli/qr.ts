@@ -230,27 +230,49 @@ export function encodeQr(text: string, opts: { ecc?: Ecc; mask?: number } = {}):
   return { size, version: ver, mask, modules };
 }
 
+/** Text rows a QR code takes in each mode (quiet zone included). */
+export function qrRows(qr: QrCode, mode: "full" | "half", margin = 2): number {
+  const n = qr.size + margin * 2;
+  return mode === "full" ? n : Math.ceil(n / 2);
+}
+
 /**
- * Draw a QR code with half-block characters: two modules per text row, so it is roughly square
- * in a terminal. `invert` draws dark-on-light for light terminal themes; the default is the
- * safe one (a light quiet zone is drawn explicitly, so it scans on any background).
+ * Draw a QR code for a terminal, dark modules on an explicit white quiet zone (scans on any theme).
+ *
+ * Colour comes from cell BACKGROUNDS wherever possible. Many terminals leave a gap between text
+ * rows (line height > 1) and do not stretch block glyphs into it, so a code drawn with foreground
+ * "█" glyphs shows light stripes through every dark row and phones cannot read it.
+ *   full — one text row per module row, two spaces per module, backgrounds only. No glyphs at all,
+ *          so line spacing cannot break it. Twice as tall as `half`.
+ *   half — two module rows per text row: a uniform cell is a space on that background; a mixed cell
+ *          is "▀" with the top colour as foreground and the bottom colour as background.
  */
-export function renderQr(qr: QrCode, opts: { margin?: number; indent?: string } = {}): string[] {
+export function renderQr(qr: QrCode, opts: { margin?: number; indent?: string; mode?: "full" | "half" } = {}): string[] {
   const m = opts.margin ?? 2;
   const n = qr.size + m * 2;
   const at = (x: number, y: number) => {
     const xx = x - m, yy = y - m;
     return xx >= 0 && yy >= 0 && xx < qr.size && yy < qr.size && qr.modules[yy][xx];
   };
-  // White background (ANSI 47 + black 30) so the code is light-with-dark-modules on every theme.
+  const BG = (dark: boolean) => (dark ? "\x1b[48;5;16m" : "\x1b[48;5;231m");
+  const FG = (dark: boolean) => (dark ? "\x1b[38;5;16m" : "\x1b[38;5;231m");
+  const RESET = "\x1b[0m";
   const lines: string[] = [];
+  if (opts.mode === "full") {
+    for (let y = 0; y < n; y++) {
+      let s = "", cur: boolean | null = null;
+      for (let x = 0; x < n; x++) { const d = at(x, y); if (d !== cur) { s += BG(d); cur = d; } s += "  "; }
+      lines.push((opts.indent ?? "") + s + RESET);
+    }
+    return lines;
+  }
   for (let y = 0; y < n; y += 2) {
     let s = "";
     for (let x = 0; x < n; x++) {
       const top = at(x, y), bot = y + 1 < n ? at(x, y + 1) : false;
-      s += top && bot ? "█" : top ? "▀" : bot ? "▄" : " ";
+      s += top === bot ? BG(top) + " " : BG(bot) + FG(top) + "▀";
     }
-    lines.push((opts.indent ?? "") + "\x1b[47m\x1b[30m" + s + "\x1b[0m");
+    lines.push((opts.indent ?? "") + s + RESET);
   }
   return lines;
 }

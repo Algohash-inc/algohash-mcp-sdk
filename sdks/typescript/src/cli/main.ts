@@ -11,11 +11,11 @@
 import os from "node:os";
 import { AlgoHashError } from "../client.js";
 import { baseUrl, startDevice, pollDevice, refreshTokens, revokeTokens, type TokenSet, type DeviceStart } from "./device.js";
-import { encodeQr, renderQr } from "./qr.js";
+import { encodeQr, renderQr, qrRows } from "./qr.js";
 import { saveLogin, loadSession, loadSecret, clearLogin, storeLabel, type Secret, type Session, type StoreKind } from "./store.js";
 import { detectCaps, Screen, clock } from "./ui.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 const SERVER_LABEL: Record<string, string> = { studio: "Studio MCP", team: "Team MCP", voice: "Voice MCP" };
 
 interface Flags { _: string[]; base?: string; servers?: string[]; store?: "auto" | StoreKind; qr: boolean; wait: boolean; timeout?: number; json: boolean; show: boolean; help: boolean; open: boolean }
@@ -55,6 +55,8 @@ Environment
   ALGOHASH_BASE_URL       server to sign in to (default https://console.algohash.ai)
   ALGOHASH_CONFIG_DIR     where session.json / credentials.json live
   NO_COLOR, ALGOHASH_ASCII=1    plain output
+  ALGOHASH_QR=full|half   force the login QR size
+  ALGOHASH_BANNER=0       small header instead of the big logo
 `;
 
 function machineName(): string { return os.hostname().replace(/\.(local|lan|home)$/i, "").slice(0, 60); }
@@ -93,12 +95,36 @@ async function login(f: Flags): Promise<number> {
   const pushed = !!d.algohash?.pushed;
 
   if (ui.interactive) {
-    ui.header("MCP login");
+    // Full-size QR (backgrounds only) scans on every terminal. Half size uses ▀ glyphs for mixed
+    // cells, which stretch when the terminal adds line spacing, so it is only the last resort.
+    // Layouts, first that fits:
+    //   steps  — step 1, full QR, link, code box, step 3 and the live line all on screen (header may scroll away);
+    //   bottom — full QR printed last, under the steps, so the QR and the live line stay on screen;
+    //   half   — half-size QR in step 1, with a hint.
+    // ECC L keeps the code small (version 3 for the login link); a screen is a clean source.
+    // The big logo only shows when it fits too. ALGOHASH_QR=full|half forces a size.
+    const showQr = f.qr && ui.caps.unicode && ui.caps.color;
+    const qr = showQr ? encodeQr(d.verification_uri_complete, { ecc: "L" }) : null;
+    const forced = process.env.ALGOHASH_QR;
+    const fullRows = qr ? qrRows(qr, "full") : 0;
+    const wide = !!qr && (qr.size + 4) * 2 + 5 <= ui.caps.width;
+    const stepsRows = 3 + fullRows + 13;
+    const layout: "steps" | "bottom" | "half" | "none" = !qr ? "none"
+      : forced === "half" ? "half"
+      : forced === "full" ? (stepsRows <= ui.caps.rows ? "steps" : "bottom")
+      : wide && stepsRows <= ui.caps.rows ? "steps"
+      : wide && fullRows + 3 <= ui.caps.rows ? "bottom"
+      : "half";
+    const mode = layout === "half" ? "half" : "full";
+    const qrLines = qr ? renderQr(qr, { indent: "     ", mode }) : [];
+    ui.header("MCP login", layout === "bottom" ? fullRows + 3 : 3 + qrLines.length + 13 + (layout === "half" ? 1 : 0));
     ui.mark();
-    ui.step(1, "Open this on your phone", pushed ? "A request was sent to your AlgoHash app. Or scan the code." : "Scan with your camera, or open the link.");
+    const scan = layout === "bottom" ? "Scan the code below with your camera, or open the link." : "Scan with your camera, or open the link.";
+    ui.step(1, "Open this on your phone", pushed ? `A request was sent to your AlgoHash app. Or ${scan[0].toLowerCase()}${scan.slice(1)}` : scan);
     ui.blank();
-    if (f.qr && ui.caps.unicode && ui.caps.color) {
-      for (const l of renderQr(encodeQr(d.verification_uri_complete), { indent: "     " })) ui.line(l);
+    if (layout === "steps" || layout === "half") {
+      for (const l of qrLines) ui.line(l);
+      if (layout === "half") ui.note(`   Won't scan? Make the window ${fullRows + 3}+ rows tall, or run with ALGOHASH_QR=full.`);
       ui.blank();
     }
     ui.line(`     ${p.blue(d.verification_uri)}`);
@@ -109,6 +135,10 @@ async function login(f: Flags): Promise<number> {
     ui.blank();
     ui.step(3, "Approve with Face ID in AlgoHash");
     ui.blank();
+    if (layout === "bottom") {
+      for (const l of qrLines) ui.line(l);
+      ui.blank();
+    }
   } else {
     ui.line("AlgoHash MCP login");
     ui.line(`Open: ${d.verification_uri_complete}`);
@@ -228,7 +258,7 @@ async function status(f: Flags): Promise<number> {
   if (!got) return 1;
   const { session } = got;
   if (ui.interactive) {
-    ui.header("status");
+    ui.header("status", 12);
     ui.ok("Signed in");
     ui.blank();
     ui.kv([

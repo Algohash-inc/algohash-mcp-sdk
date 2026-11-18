@@ -2,6 +2,18 @@
 
 All notable changes are listed here. Versions follow [Semantic Versioning](https://semver.org).
 
+## 0.2.1 — 2026-11-18
+
+Terminal login screen fixes (TypeScript CLI only; no API changes).
+
+- **QR code scans on every terminal.** The code is now drawn with background colours (two spaces per
+  module) instead of `█▀▄` glyphs, which left light stripes when the terminal adds line spacing. It
+  uses error correction L, so the login link fits a smaller code (29 × 29). When the window is too
+  short for the steps and the code together, the code moves under the steps; only very small windows
+  fall back to the half-height code, with a hint. `ALGOHASH_QR=full|half` forces a size.
+- **Big ALGOHASH logo** at the top of `login` and `status` when the terminal is wide and tall enough
+  (otherwise the small header, as before). `ALGOHASH_BANNER=0` turns it off.
+
 ## 0.2.0 — 2026-11-18
 
 Spec, wrappers, reference and docs brought in step with the live servers.

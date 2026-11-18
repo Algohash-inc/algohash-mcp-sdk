@@ -54,7 +54,7 @@ Login flags: `--servers studio,team`, `--no-qr`, `--no-wait`, `--timeout <sec>`,
 `--store auto|keychain|secret-service|file`.
 
 Environment: `ALGOHASH_BASE_URL`, `ALGOHASH_CONFIG_DIR`, `ALGOHASH_CREDENTIALS_FILE`, `NO_COLOR`,
-`ALGOHASH_ASCII=1`, `CI`.
+`ALGOHASH_ASCII=1`, `ALGOHASH_QR=full|half` (QR size), `ALGOHASH_BANNER=0` (no big logo), `CI`.
 
 Exit codes: `0` signed in, `1` error, `2` `--no-wait`, `3` denied, `4` expired, `130` Ctrl-C.
 
