@@ -3,7 +3,8 @@
 Typed client for the AlgoHash Studio, Team and Open API MCP servers. Python 3.9+, standard library only.
 
 ```bash
-pip install algohash-mcp
+# Not on PyPI yet: install straight from this repository.
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"
 ```
 
 ```python

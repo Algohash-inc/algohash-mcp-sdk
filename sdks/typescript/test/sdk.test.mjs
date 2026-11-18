@@ -28,7 +28,7 @@ test("initialize negotiates the latest protocol", async () => {
 
 test("tools/list matches the generated groups", async () => {
   const tools = await studio("smk_mock_read").listTools();
-  assert.equal(tools.length, 22);
+  assert.equal(tools.length, 24);
   assert.ok(tools.every((t) => !("x-actions" in t)));
 });
 
@@ -57,7 +57,7 @@ test("allowedActions splits the matrix", () => {
   const { allowed, denied } = s.allowedActions(["read"]);
   assert.ok(allowed.includes("studio.list_assets"));
   assert.ok(denied.includes("studio_create.storyboard_draw"));
-  assert.equal(allowed.length + denied.length, 329);
+  assert.equal(allowed.length + denied.length, 343);
 });
 
 test("paid call returns needs_confirmation and nothing runs", async () => {

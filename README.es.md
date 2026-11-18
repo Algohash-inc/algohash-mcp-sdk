@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Versión 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 herramientas MCP">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 acciones">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="Versión 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 herramientas MCP">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 acciones">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="Cero dependencias en tiempo de ejecución">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="Licencia MIT"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 Un SDK, tres servidores** - Studio, Team y Open API comparten la misma forma de cliente, el mismo tipo de resultado y el mismo modelo de errores
 - **🛡️ Seguro por defecto** - los pasos de pago y los públicos de Studio y Team esperan a que los apruebes en AlgoHash; tu agente no puede aprobar su propio gasto
-- **🧬 Tipado y generado** - 399 acciones, cada una envuelta y documentada directamente desde la especificación abierta, así que el SDK nunca se desincroniza de los servidores
+- **🧬 Tipado y generado** - 414 acciones, cada una envuelta y documentada directamente desde la especificación abierta, así que el SDK nunca se desincroniza de los servidores
 - **🪶 Cero dependencias** - solo `fetch`, `urllib` y `net/http` de la plataforma; nada extra que auditar, fijar o parchear
 - **🧪 Pruébalo sin clave** - un servidor mock local ejecuta todos los ejemplos y pruebas sin cuenta y sin gasto
 
@@ -71,10 +71,12 @@
 ### 1. Instalar
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+El paquete de PyPI (`algohash-mcp`) aún no está publicado. Por ahora instala el SDK de Python desde este repositorio.
 
 ### 2. Obtener una clave
 
@@ -83,6 +85,12 @@ y guárdala en una variable de entorno. Nunca la escribas directamente en el có
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+¿Trabajas en una terminal? Inicia sesión con tu teléfono en lugar de copiar una clave. Los gastos quedan desactivados hasta que los actives. [Cómo funciona el inicio de sesión en terminal →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. Haz tu primera llamada
@@ -114,7 +122,7 @@ Cada acción de la especificación declara los scopes que necesita. Analiza una 
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -189,7 +197,9 @@ Los pasos públicos (publicar, postear) siguen el mismo ciclo con `needs_permiss
 - Tu cuenta de Studio: biblioteca, imágenes, vídeo, storyboards, editor, resultados, publicaciones sociales
 - Scopes `read`, `edit`, `spend`, `publish`; las claves nuevas usan por defecto `read` + `edit` + `spend`
 - Primero el storyboard: todo vídeo parte de un storyboard que tú aprobaste
-- 22 herramientas · 329 acciones
+- Playbooks: una sola petición ejecuta un flujo ya preparado de principio a fin (storyboard, presupuesto, render) con `studio_playbook`
+- Además: hojas de diálogo por storyboard, extracción de música con mapa de beats, lip sync, avatares parlantes, flujos comentario → DM
+- 24 herramientas · 343 acciones
 
 ### 🟢 Team
 
@@ -197,7 +207,8 @@ Los pasos públicos (publicar, postear) siguen el mismo ciclo con `needs_permiss
 - Scopes `read`, `edit`, `spend`; las claves nuevas usan por defecto `read` + `edit`
 - Siempre pregunta antes de gastar, eliminar, aplicar un borrador o abrir una herramienta de riesgo
 - `client_ref` hace que las llamadas de creación sean seguras de reintentar; los borradores llevan un `rev`
-- 6 herramientas · 70 acciones
+- Modo Plus por compañero, para trabajo que no puede fallar (`team.set_plus`)
+- 7 herramientas · 71 acciones
 
 ### 🟠 Open API
 
@@ -220,6 +231,18 @@ Los pasos públicos (publicar, postear) siguen el mismo ciclo con `needs_permiss
 ## 🔌 Conecta una app de IA
 
 No hace falta código. Apunta la app a la URL de un servidor e inicia sesión.
+
+Claude, en tres pasos. La URL del servidor es la misma para ChatGPT:
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. Ponle el nombre **AlgoHash Studio**, pega la URL y haz clic en **Add**
+3. Haz clic en **Connect**, inicia sesión en Studio y aprueba
+
+El gasto está desactivado por defecto. Cada cargo espera tu aprobación en una tarjeta de presupuesto. [Guía completa de configuración →](https://console.algohash.ai/mcp/studio/connect)
 
 | Host | Cómo |
 |----------|----------|
@@ -301,6 +324,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team: desplegar trabajo** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API: cotizar → generar** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **Herramientas para tu propio agente** | `07-agent-context.mjs` | | |
+| **Ejecutar un playbook** | `08-playbook.mjs` | `08_playbook.py` | |
 
 Los ejemplos te preguntan en la terminal antes de cualquier paso de pago o público. Sin terminal, lo rechazan.
 

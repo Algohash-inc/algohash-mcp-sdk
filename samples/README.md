@@ -38,6 +38,7 @@ so it can never approve a real charge.
 | Team: deploy work to a group | `05-team-deploy.mjs` | `05_team_deploy.py` | `go run ./cmd/team-deploy` |
 | Open API: quote, generate, poll | `06-open-quote.mjs` | `06_open_quote.py` | `go run ./cmd/open-quote` |
 | Feed tools to your own LLM agent | `07-agent-context.mjs` | | |
+| Run a ready-made playbook (starts, then cancels) | `08-playbook.mjs` | `08_playbook.py` | |
 
 Go samples run from `samples/go` (`cd samples/go && ALGOHASH_MOCK=1 go run ./cmd/permissions`).
 They use the local SDK through a `replace` directive.

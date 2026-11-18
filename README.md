@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 MCP tools">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 actions">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="Version 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 MCP tools">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 actions">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="Zero runtime dependencies">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 One SDK, three servers** - Studio, Team and Open API share one client shape, one result type and one error model
 - **🛡️ Safe by default** - paid and public Studio and Team steps wait for you to approve them on AlgoHash; your agent cannot approve its own spending
-- **🧬 Typed and generated** - 399 actions, each wrapped and documented straight from the open spec, so the SDK never drifts from the servers
+- **🧬 Typed and generated** - 414 actions, each wrapped and documented straight from the open spec, so the SDK never drifts from the servers
 - **🪶 Zero dependencies** - platform `fetch`, `urllib` and `net/http` only; nothing extra to audit, pin or patch
 - **🧪 Try it without a key** - a local mock server runs every sample and test with no account and no spend
 
@@ -71,10 +71,12 @@
 ### 1. Install
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+The PyPI package (`algohash-mcp`) is not published yet. Install the Python SDK from this repository for now.
 
 ### 2. Get a key
 
@@ -83,6 +85,12 @@ then keep it in an environment variable. Never hard-code it.
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+Working in a terminal? Sign in with your phone instead of copying a key. Spending stays off until you turn it on. [How terminal login works →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. Make your first call
@@ -114,7 +122,7 @@ Every action in the spec declares the scopes it needs. Scan a key before you han
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -189,7 +197,9 @@ Public steps (posting, publishing) follow the same loop with `needs_permission` 
 - Your Studio account: library, images, video, storyboards, editor, outputs, social posts
 - Scopes `read`, `edit`, `spend`, `publish`; new keys default to `read` + `edit` + `spend`
 - Storyboard first: every video starts from a storyboard you approved
-- 22 tools · 329 actions
+- Playbooks: one request runs a ready-made flow end to end (storyboard, quote, render) with `studio_playbook`
+- Also: storyboard dialogue sheets, beat-map music extraction, lip sync, talking avatars, comment → DM flows
+- 24 tools · 343 actions
 
 ### 🟢 Team
 
@@ -197,7 +207,8 @@ Public steps (posting, publishing) follow the same loop with `needs_permission` 
 - Scopes `read`, `edit`, `spend`; new keys default to `read` + `edit`
 - Always asks before spending, deleting, applying a draft or opening a risky tool
 - `client_ref` makes create calls safe to retry; drafts carry a `rev`
-- 6 tools · 70 actions
+- Plus mode per teammate, for work that must not go wrong (`team.set_plus`)
+- 7 tools · 71 actions
 
 ### 🟠 Open API
 
@@ -220,6 +231,18 @@ Public steps (posting, publishing) follow the same loop with `needs_permission` 
 ## 🔌 Connect an AI App
 
 No code needed. Point the app at a server URL and sign in.
+
+Claude, in three steps. The server URL is the same for ChatGPT:
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. Name it **AlgoHash Studio**, paste the URL, click **Add**
+3. Click **Connect**, sign in to Studio and approve
+
+Spending is off by default. Every charge waits for your OK on a quote card. [Full setup guide →](https://console.algohash.ai/mcp/studio/connect)
 
 | Host | How |
 |----------|----------|
@@ -301,6 +324,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team: deploy work** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API: quote → generate** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **Tools for your own agent** | `07-agent-context.mjs` | | |
+| **Run a playbook** | `08-playbook.mjs` | `08_playbook.py` | |
 
 Samples ask you in the terminal before any paid or public step. With no terminal, they decline.
 

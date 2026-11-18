@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Versi 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 tool MCP">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 action">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="Versi 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 tool MCP">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 action">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="Nol dependensi runtime">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="Lisensi MIT"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 Satu SDK, tiga server** - Studio, Team, dan Open API memakai satu bentuk klien, satu tipe hasil, dan satu model error yang sama
 - **🛡️ Aman secara default** - langkah berbayar dan langkah publik di Studio dan Team menunggu persetujuan Anda di AlgoHash; agen Anda tidak bisa menyetujui pengeluarannya sendiri
-- **🧬 Bertipe dan dihasilkan otomatis** - 399 action, masing-masing dibungkus dan didokumentasikan langsung dari spesifikasi terbuka, sehingga SDK tidak pernah menyimpang dari server
+- **🧬 Bertipe dan dihasilkan otomatis** - 414 action, masing-masing dibungkus dan didokumentasikan langsung dari spesifikasi terbuka, sehingga SDK tidak pernah menyimpang dari server
 - **🪶 Nol dependensi** - hanya `fetch`, `urllib`, dan `net/http` bawaan platform; tidak ada tambahan yang perlu diaudit, dikunci versinya, atau ditambal
 - **🧪 Coba tanpa kunci** - server mock lokal menjalankan semua contoh dan pengujian tanpa akun dan tanpa biaya
 
@@ -71,10 +71,12 @@
 ### 1. Instal
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+Paket PyPI (`algohash-mcp`) belum dirilis. Untuk sekarang, pasang SDK Python dari repositori ini.
 
 ### 2. Dapatkan kunci
 
@@ -83,6 +85,12 @@ lalu simpan di variabel lingkungan. Jangan pernah menuliskannya langsung di kode
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+Bekerja di terminal? Masuk dengan ponsel alih-alih menyalin key. Pengeluaran tetap mati sampai Anda menyalakannya. [Cara kerja login terminal →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. Lakukan panggilan pertama Anda
@@ -114,7 +122,7 @@ Setiap action dalam spesifikasi mendeklarasikan scope yang dibutuhkannya. Pindai
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -189,7 +197,9 @@ Langkah publik (memposting, menerbitkan) mengikuti alur yang sama dengan `needs_
 - Akun Studio Anda: pustaka, gambar, video, storyboard, editor, hasil keluaran, postingan media sosial
 - Scope `read`, `edit`, `spend`, `publish`; kunci baru secara default memakai `read` + `edit` + `spend`
 - Storyboard lebih dulu: setiap video dimulai dari storyboard yang sudah Anda setujui
-- 22 tool · 329 action
+- Playbook: satu permintaan menjalankan alur siap pakai dari awal sampai akhir (storyboard, penawaran harga, render) dengan `studio_playbook`
+- Juga: lembar dialog per storyboard, ekstraksi musik dengan peta ketukan, lip sync, avatar berbicara, alur komentar → DM
+- 24 tool · 343 action
 
 ### 🟢 Team
 
@@ -197,7 +207,8 @@ Langkah publik (memposting, menerbitkan) mengikuti alur yang sama dengan `needs_
 - Scope `read`, `edit`, `spend`; kunci baru secara default memakai `read` + `edit`
 - Selalu bertanya sebelum membelanjakan, menghapus, menerapkan draf, atau membuka tool berisiko
 - `client_ref` membuat panggilan pembuatan aman untuk dicoba ulang; draf membawa `rev`
-- 6 tool · 70 action
+- Mode Plus per rekan tim, untuk pekerjaan yang tidak boleh salah (`team.set_plus`)
+- 7 tool · 71 action
 
 ### 🟠 Open API
 
@@ -220,6 +231,18 @@ Langkah publik (memposting, menerbitkan) mengikuti alur yang sama dengan `needs_
 ## 🔌 Hubungkan Aplikasi AI
 
 Tidak perlu kode. Arahkan aplikasi ke URL server lalu masuk.
+
+Claude, dalam tiga langkah. URL server-nya sama untuk ChatGPT:
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. Beri nama **AlgoHash Studio**, tempel URL, klik **Add**
+3. Klik **Connect**, masuk ke Studio, lalu setujui
+
+Pengeluaran nonaktif secara default. Setiap biaya menunggu persetujuan Anda di kartu penawaran. [Panduan penyiapan lengkap →](https://console.algohash.ai/mcp/studio/connect)
 
 | Host | Cara |
 |----------|----------|
@@ -301,6 +324,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team: deploy pekerjaan** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API: penawaran → generate** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **Tool untuk agen Anda sendiri** | `07-agent-context.mjs` | | |
+| **Menjalankan playbook** | `08-playbook.mjs` | `08_playbook.py` | |
 
 Contoh-contoh ini akan bertanya kepada Anda di terminal sebelum langkah berbayar atau publik apa pun. Tanpa terminal, semuanya ditolak.
 

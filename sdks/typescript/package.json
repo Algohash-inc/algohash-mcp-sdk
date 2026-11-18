@@ -1,11 +1,12 @@
 {
   "name": "@algohash/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed client for the AlgoHash Studio, Team and Open API MCP servers.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": { "algohash": "dist/cli/main.js" },
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist", "README.md"],
   "engines": { "node": ">=18" },

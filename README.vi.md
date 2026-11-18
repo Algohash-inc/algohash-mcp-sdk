@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Phiên bản 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 công cụ MCP">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 action">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="Phiên bản 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 công cụ MCP">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 action">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="Không có phụ thuộc runtime">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="Giấy phép MIT"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 Một SDK, ba máy chủ** - Studio, Team và Open API dùng chung một dạng client, một kiểu kết quả và một mô hình lỗi
 - **🛡️ An toàn theo mặc định** - các bước tốn phí và các bước công khai của Studio và Team chỉ chạy sau khi bạn duyệt trên AlgoHash; agent của bạn không thể tự duyệt khoản chi của chính nó
-- **🧬 Có kiểu dữ liệu và được sinh tự động** - 399 action, mỗi action đều được bọc và ghi tài liệu trực tiếp từ đặc tả mở, nên SDK không bao giờ lệch so với máy chủ
+- **🧬 Có kiểu dữ liệu và được sinh tự động** - 414 action, mỗi action đều được bọc và ghi tài liệu trực tiếp từ đặc tả mở, nên SDK không bao giờ lệch so với máy chủ
 - **🪶 Không phụ thuộc thư viện ngoài** - chỉ dùng `fetch`, `urllib` và `net/http` có sẵn của nền tảng; không có gì thêm để kiểm toán, ghim phiên bản hay vá lỗi
 - **🧪 Dùng thử không cần khóa** - một máy chủ mock cục bộ chạy được mọi mẫu và bài kiểm thử mà không cần tài khoản, không tốn phí
 
@@ -71,10 +71,12 @@
 ### 1. Cài đặt
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+Gói PyPI (`algohash-mcp`) chưa được phát hành. Hiện tại hãy cài SDK Python từ repository này.
 
 ### 2. Lấy khóa
 
@@ -83,6 +85,12 @@ rồi lưu vào một biến môi trường. Tuyệt đối không viết cứng
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+Làm việc trong terminal? Đăng nhập bằng điện thoại thay vì sao chép key. Chi tiêu bị tắt cho đến khi bạn tự bật. [Cách đăng nhập terminal →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. Thực hiện lời gọi đầu tiên
@@ -114,7 +122,7 @@ Mỗi action trong đặc tả đều khai báo các scope mà nó cần. Hãy q
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -189,7 +197,9 @@ Các bước công khai (đăng bài, xuất bản) đi theo cùng vòng lặp n
 - Tài khoản Studio của bạn: thư viện, ảnh, video, storyboard, trình chỉnh sửa, kết quả đầu ra, bài đăng mạng xã hội
 - Các scope `read`, `edit`, `spend`, `publish`; khóa mới mặc định có `read` + `edit` + `spend`
 - Storyboard trước: mọi video đều bắt đầu từ một storyboard mà bạn đã duyệt
-- 22 công cụ · 329 action
+- Playbook: một yêu cầu chạy trọn một quy trình dựng sẵn (storyboard, báo giá, render) với `studio_playbook`
+- Ngoài ra: bảng thoại cho storyboard, tách nhạc kèm bản đồ nhịp, lip sync, avatar biết nói, luồng bình luận → DM
+- 24 công cụ · 343 action
 
 ### 🟢 Team
 
@@ -197,7 +207,8 @@ Các bước công khai (đăng bài, xuất bản) đi theo cùng vòng lặp n
 - Các scope `read`, `edit`, `spend`; khóa mới mặc định có `read` + `edit`
 - Luôn hỏi trước khi chi tiền, xóa, áp dụng bản nháp hoặc mở một công cụ rủi ro
 - `client_ref` giúp các lời gọi tạo mới có thể thử lại an toàn; bản nháp mang theo một `rev`
-- 6 công cụ · 70 action
+- Chế độ Plus cho từng đồng đội, dành cho việc không được phép sai (`team.set_plus`)
+- 7 công cụ · 71 action
 
 ### 🟠 Open API
 
@@ -220,6 +231,18 @@ Các bước công khai (đăng bài, xuất bản) đi theo cùng vòng lặp n
 ## 🔌 Kết nối một ứng dụng AI
 
 Không cần viết mã. Chỉ cần trỏ ứng dụng tới URL máy chủ rồi đăng nhập.
+
+Với Claude, chỉ ba bước. ChatGPT dùng cùng URL server:
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. Đặt tên **AlgoHash Studio**, dán URL, bấm **Add**
+3. Bấm **Connect**, đăng nhập Studio và chấp thuận
+
+Chi tiêu mặc định bị tắt. Mỗi khoản phí đều chờ bạn đồng ý trên thẻ báo giá. [Hướng dẫn thiết lập đầy đủ →](https://console.algohash.ai/mcp/studio/connect)
 
 | Host | Cách làm |
 |----------|----------|
@@ -301,6 +324,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team: triển khai công việc** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API: báo giá → tạo** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **Công cụ cho agent của riêng bạn** | `07-agent-context.mjs` | | |
+| **Chạy một playbook** | `08-playbook.mjs` | `08_playbook.py` | |
 
 Các mẫu sẽ hỏi bạn ngay trong terminal trước mọi bước tốn phí hoặc công khai. Nếu không có terminal, chúng sẽ từ chối.
 

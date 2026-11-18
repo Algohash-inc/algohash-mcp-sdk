@@ -7,8 +7,8 @@ AlgoHash exposes three remote MCP servers. Each one is a separate endpoint with 
 | | Studio | Team | Open API |
 |---|---|---|---|
 | Endpoint | `/mcp/studio` | `/mcp/team` | `/open/v1/mcp` |
-| Tools | 22 | 6 | 5 |
-| Actions | 329 | 70 | — (tools take arguments directly) |
+| Tools | 24 | 7 | 5 |
+| Actions | 343 | 71 | — (tools take arguments directly) |
 | Scopes | `read` `edit` `spend` `publish` | `read` `edit` `spend` | none (monthly cap on the key) |
 | Key | `smk_…` or OAuth 2.1 | `tmk_…` or OAuth 2.1 | Open API key |
 

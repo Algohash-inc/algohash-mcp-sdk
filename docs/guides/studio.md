@@ -7,7 +7,7 @@ videos, storyboards, the shot-by-shot editor, motion templates, outputs and soci
 
 | Group (SDK) | Tool | Use it for |
 |---|---|---|
-| `core` | `studio` | Asset library, image generation, scene templates, ad wizard, productions, audio, Instagram, motion graphics, the motion template library |
+| `core` | `studio` | Asset library, image generation, scene templates, ad wizard, productions, audio, Instagram and comment → DM flows, motion graphics, the motion template library, music extraction, lip sync, talking avatars |
 | `create` | `studio_create` | The Create page (steps 1–4), cinematic cut and highlight cut |
 | `project` `shots` `layers` `audio` `director` `export` `library` | `studio_project` … | The editor: projects, shots, overlay layers, the audio plan, the AI director, export, folders |
 | `clipper` | `studio_clipper` | Long video → ranked short clips |
@@ -17,7 +17,8 @@ videos, storyboards, the shot-by-shot editor, motion templates, outputs and soci
 | `compiler` / `longcut` | `studio_compiler` / `studio_longcut` | Script compiler, long-video joining |
 | `assets` | `studio_assets` | Details of one character, scene or prop: versions, images, memory, voice |
 | `outputs` | `studio_outputs` | **The only place to get finished files** (signed download links, previews) |
-| `storyboard` | `studio_storyboard` | Play a storyboard, revise it, record the user's approval |
+| `storyboard` | `studio_storyboard` | Play a storyboard, revise it, record the user's approval, the dialogue sheet, the full-film overview |
+| `playbook` | `studio_playbook` | Ready-made flows: one request, the server runs storyboard, quote and render step by step |
 | `cast` | `studio_cast` | Let the user pick the lead character |
 | `confirm` | `studio_confirm` | Quote and permission cards (`show`, `wait`) |
 | `browse` | `studio_browse` | Let the user pick a reference from the library |
@@ -65,6 +66,61 @@ if (await askHuman("Approve this storyboard?")) {
 
 `approve` (the storyboard action) records **the user's** decision. Call it only after the user said yes.
 
+`studio_storyboard` actions add a card to the chat in card hosts. An agent that only needs the result
+can use the card-free twins on `studio_create`: `storyboard_approve`, `storyboard_dialogue`,
+`storyboard_dialogue_set`, `storyboard_dialogue_plan`, plus `wait_job` (wait for a render or a drawn
+board) and `wait_approval` (wait for the user's tap on a quote or permission card).
+
+### What the film says: the dialogue sheet
+
+The words spoken in the video come from the storyboard's **dialogue sheet**, not from the prompt of
+`storyboard_video`. Read it with `studio_storyboard.dialogue`, let AI write it in a given language with
+`dialogue_plan { args: { language } }`, or set every line yourself with `dialogue_set`. All three are free.
+You can also pass `dialogue_language` / `speakers` to `studio_create.storyboard`.
+
+```ts
+await studio.create.storyboardDialoguePlan({ version, args: { language: "English" } });
+const sheet = await studio.create.storyboardDialogue({ version });   // [{ who, t0, t1, text, lang }]
+```
+
+### Multi-act films
+
+Draw one board per act, then call `studio_storyboard.overview { args: { acts: [{ board, title? }] } }`
+once (free). Every frame of the film is laid out on one sheet, saved to the library.
+
+## Playbooks: one request, the whole flow
+
+`studio_playbook` runs a ready-made flow on the server. You ask the user for the inputs, pass their
+answers on, and hand over the result. Storyboard approval and quotes still go to the user.
+
+```
+studio_playbook.list     what playbooks exist and what each one asks the user
+studio_playbook.start    { playbook, inputs }            → run_id + the next step
+studio_playbook.step     { run_id, approve | revise | confirm_token | permission_token | cast_pick }
+studio_playbook.status   { run_id }
+studio_playbook.cancel   { run_id }
+```
+
+```ts
+const list = await studio.playbook.list();                      // [{ id, title, summary, inputs }]
+const run = await studio.playbook.start({ playbook: list.data.playbooks[0].id, inputs: { /* the user's answers */ } });
+let step = await studio.playbook.step({ run_id: run.data.run_id });            // still working: call again
+step = await studio.playbook.step({ run_id: run.data.run_id, approve: true }); // only after the user said yes
+```
+
+Every result carries `ask_user` (what to tell the user) and `next` (the next call). Follow them. A run
+is kept for 48 hours.
+
+## Sound and faces
+
+| Action | What it does | Cost |
+|---|---|---|
+| `studio.extract_music` | Splits the background music out of a library audio or video asset (up to 600 s), saves it, and returns a text **beat map** for cutting on the beat. Poll `extract_music_status` | paid, refunded on failure |
+| `studio.lip_sync` | Existing clip (2–10 s) + voice track → only the mouth is redrawn to match the voice | paid, per second |
+| `studio.avatar_video` | One photo + voice track (2–300 s) → a new talking-head video | paid, per second of voice |
+
+All three answer `needs_confirmation` first. None of them needs a storyboard.
+
 ## Rule 3 — pick a character when asked
 
 `studio_create.storyboard` / `cut` without a character reference may answer `needs_cast` with a
@@ -80,5 +136,8 @@ Links expire; download the files.
 
 ## Publishing
 
-Instagram, brand posts, social replies and blog posts need the `publish` scope, usually `confirm: true`,
+Comment → DM flows (`social_dm_flows`, `social_dm_media`, `social_dm_flow_save`, `social_dm_flow_delete`)
+reply to Instagram comments and messages for you: pick a post, a keyword and the steps to send.
+
+Instagram, brand posts, social replies, DM flows and blog posts need the `publish` scope, usually `confirm: true`,
 and often a `needs_permission` round. They are public and cannot be taken back. Ask first, every time.

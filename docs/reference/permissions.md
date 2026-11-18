@@ -9,10 +9,10 @@ Scopes: `read`, `edit`, `spend`, `publish` · new keys default to `read` + `edit
 
 | Needs | Actions |
 |---|---|
-| `edit` | 145 |
-| `read` | 126 |
-| `spend` | 41 |
-| `publish` | 14 |
+| `edit` | 151 |
+| `read` | 130 |
+| `spend` | 44 |
+| `publish` | 15 |
 | `edit + spend` | 2 |
 | `spend + publish` | 1 |
 
@@ -20,10 +20,10 @@ What a key can do, by scope set:
 
 | Key scopes | Allowed | Denied |
 |---|---|---|
-| `read` | 126 | 203 |
-| `read` + `edit` | 271 | 58 |
-| `read` + `edit` + `spend` | 314 | 15 |
-| `read` + `edit` + `spend` + `publish` | 329 | 0 |
+| `read` | 130 | 213 |
+| `read` + `edit` | 281 | 62 |
+| `read` + `edit` + `spend` | 327 | 16 |
+| `read` + `edit` + `spend` + `publish` | 343 | 0 |
 
 Some Studio actions also change scope with their arguments: `analyze_refs` with `mode: "style"` is `spend`; blog generation that is not a draft is `spend + publish`; `motion_create` (with a `prompt`) and `motion_direct_reply` are `edit` when no platform text model runs and are refused without `spend` when one does. The server is always the authority.
 
@@ -33,7 +33,7 @@ Scopes: `read`, `edit`, `spend` · new keys default to `read` + `edit`
 
 | Needs | Actions |
 |---|---|
-| `edit` | 47 |
+| `edit` | 48 |
 | `read` | 20 |
 | `spend` | 3 |
 
@@ -41,9 +41,9 @@ What a key can do, by scope set:
 
 | Key scopes | Allowed | Denied |
 |---|---|---|
-| `read` | 20 | 50 |
-| `read` + `edit` | 67 | 3 |
-| `read` + `edit` + `spend` | 70 | 0 |
+| `read` | 20 | 51 |
+| `read` + `edit` | 68 | 3 |
+| `read` + `edit` + `spend` | 71 | 0 |
 
 Some Team actions need **more** scopes depending on their arguments (the table above shows the base scope). The server re-checks on every call:
 

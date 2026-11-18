@@ -6,335 +6,349 @@ import "context"
 
 // StudioActionScopes lists the scopes each action needs, keyed "tool.action".
 var StudioActionScopes = map[string][]string{
-	"studio.list_assets":                {"read"},
-	"studio.match_cast":                 {"edit"},
-	"studio.get_asset":                  {"read"},
-	"studio.list_gallery":               {"read"},
-	"studio.search_library":             {"read"},
-	"studio.list_jobs":                  {"read"},
-	"studio.select_version":             {"edit"},
-	"studio.import_reference_video":     {"spend"},
-	"studio.list_productions":           {"read"},
-	"studio.get_production":             {"read"},
-	"studio.list_templates":             {"read"},
-	"studio.list_video_models":          {"read"},
-	"studio.list_image_styles":          {"read"},
-	"studio.get_image_style":            {"read"},
-	"studio.search_motion_templates":    {"read"},
-	"studio.get_motion_template":        {"read"},
-	"studio.preview_motion_template":    {"edit"},
-	"studio.render_motion_template":     {"spend"},
-	"studio.render_paper_reel":          {"spend"},
-	"studio.motion_render_status":       {"read"},
-	"studio.cancel_motion_render":       {"edit"},
-	"studio.fork_motion_template":       {"edit"},
-	"studio.list_motion_forks":          {"read"},
-	"studio.get_motion_fork":            {"read"},
-	"studio.edit_motion_fork":           {"edit"},
-	"studio.motion_fork_source":         {"read"},
-	"studio.restore_motion_fork":        {"edit"},
-	"studio.delete_motion_fork":         {"edit"},
-	"studio.list_scene_templates":       {"read"},
-	"studio.generate_scene_template":    {"edit"},
-	"studio.apply_scene_template":       {"edit"},
-	"studio.estimate_cost":              {"read"},
-	"studio.set_shot_selection":         {"edit"},
-	"studio.generate_image":             {"spend"},
-	"studio.generate_video":             {"spend"},
-	"studio.create_asset":               {"edit"},
-	"studio.process_asset":              {"spend"},
-	"studio.edit_asset":                 {"spend"},
-	"studio.rename_asset":               {"edit"},
-	"studio.set_image_model":            {"edit"},
-	"studio.analyze_refs":               {"edit"},
-	"studio.ad_questions":               {"edit"},
-	"studio.ad_prompt":                  {"edit"},
-	"studio.ad_chat":                    {"edit"},
-	"studio.ad_storyboard":              {"edit"},
-	"studio.prompt_guide":               {"read"},
-	"studio.storyboard_plan":            {"edit"},
-	"studio.draw_storyboard":            {"edit", "spend"},
-	"studio.storyboard_revise":          {"edit"},
-	"studio.storyboard_video":           {"edit", "spend"},
-	"studio.create_production":          {"edit"},
-	"studio.save_storyboard":            {"edit"},
-	"studio.accept_storyboard":          {"edit"},
-	"studio.set_production_video_model": {"edit"},
-	"studio.montage_production":         {"edit"},
-	"studio.record_clip":                {"edit"},
-	"studio.finalize_production":        {"edit"},
-	"studio.stitch_production":          {"edit"},
-	"studio.delete_production":          {"edit"},
-	"studio.get_av_plan":                {"read"},
-	"studio.set_av_plan":                {"edit"},
-	"studio.check_shot_plan":            {"read"},
-	"studio.plan_music":                 {"edit"},
-	"studio.preview_narration":          {"spend"},
-	"studio.synthesize_narration":       {"spend"},
-	"studio.mix_and_finalize":           {"edit"},
-	"studio.list_folders":               {"read"},
-	"studio.create_folder":              {"edit"},
-	"studio.move_to_folder":             {"edit"},
-	"studio.use_output_as_input":        {"edit"},
-	"studio.list_image_models":          {"read"},
-	"studio.upload_asset":               {"edit"},
-	"studio.ig_status":                  {"read"},
-	"studio.social_accounts":            {"read"},
-	"studio.ig_recent_media":            {"read"},
-	"studio.ig_list_posts":              {"read"},
-	"studio.ig_schedule_post":           {"publish"},
-	"studio.ig_update_post":             {"publish"},
-	"studio.ig_delete_post":             {"publish"},
-	"studio.ig_publish_now":             {"publish"},
-	"studio.ig_caption":                 {"edit"},
-	"studio.ig_autoplan":                {"read"},
-	"studio.blog_styles":                {"read"},
-	"studio.blog_sites":                 {"read"},
-	"studio.blog_site_save":             {"edit"},
-	"studio.blog_list_posts":            {"read"},
-	"studio.blog_create_post":           {"edit"},
-	"studio.blog_update_post":           {"publish"},
-	"studio.blog_delete_post":           {"publish"},
-	"studio.blog_generate":              {"spend", "publish"},
-	"studio.blog_embed_code":            {"read"},
-	"studio.social_comments":            {"read"},
-	"studio.social_insights":            {"read"},
-	"studio.social_reply":               {"publish"},
-	"studio.social_hide":                {"publish"},
-	"studio.social_delete":              {"publish"},
-	"studio.social_like":                {"publish"},
-	"studio.social_dm_flows":            {"read"},
-	"studio.social_dm_flow_save":        {"publish"},
-	"studio.social_dm_flow_enable":      {"publish"},
-	"studio.brand_list_posts":           {"read"},
-	"studio.brand_create_post":          {"publish"},
-	"studio.brand_delete_post":          {"publish"},
-	"studio.motion_direct":              {"spend"},
-	"studio.motion_direct_status":       {"read"},
-	"studio.motion_direct_reply":        {"edit"},
-	"studio.motion_direct_cancel":       {"edit"},
-	"studio.get_motion_catalog":         {"read"},
-	"studio.list_motion_drafts":         {"read"},
-	"studio.get_motion_draft":           {"read"},
-	"studio.motion_create":              {"edit"},
-	"studio.motion_revise":              {"spend"},
-	"studio.motion_edit":                {"edit"},
-	"studio.motion_open":                {"edit"},
-	"studio.motion_ref":                 {"spend"},
-	"studio.motion_ref_status":          {"read"},
-	"studio.motion_ref_reread":          {"spend"},
-	"studio.list_motion_refs":           {"read"},
-	"studio.motion_ref_quote":           {"read"},
-	"studio.set_motion_ref_bounds":      {"edit"},
-	"studio.delete_motion_ref":          {"edit"},
-	"studio.list_motion_jobs":           {"read"},
-	"studio.list_motion_brands":         {"read"},
-	"studio.save_motion_brand":          {"edit"},
-	"studio.delete_motion_brand":        {"edit"},
-	"studio.delete_motion_draft":        {"edit"},
-	"studio.get_motion_history":         {"read"},
-	"studio.list_motion_versions":       {"read"},
-	"studio.save_motion_version":        {"edit"},
-	"studio.restore_motion_version":     {"edit"},
-	"studio.undo_motion":                {"edit"},
-	"studio.export_motion_draft":        {"spend"},
-	"studio.motion_export_status":       {"read"},
-	"studio.cancel_motion_export":       {"edit"},
-	"studio_project.list":               {"read"},
-	"studio_project.get":                {"read"},
-	"studio_project.create":             {"edit"},
-	"studio_project.analyze":            {"spend"},
-	"studio_project.composite":          {"edit"},
-	"studio_project.settings":           {"edit"},
-	"studio_project.replan":             {"edit"},
-	"studio_project.reblueprint":        {"edit"},
-	"studio_project.notes":              {"edit"},
-	"studio_project.start":              {"edit"},
-	"studio_project.reopen":             {"edit"},
-	"studio_project.variant":            {"edit"},
-	"studio_project.translate":          {"edit"},
-	"studio_project.checkpoint":         {"edit"},
-	"studio_project.versions":           {"read"},
-	"studio_project.restore":            {"edit"},
-	"studio_project.version_fields":     {"read"},
-	"studio_project.delete_version":     {"edit"},
-	"studio_project.lint":               {"read"},
-	"studio_project.log":                {"read"},
-	"studio_project.delete":             {"edit"},
-	"studio_project.estimate":           {"read"},
-	"studio_project.strip":              {"read"},
-	"studio_shots.patch":                {"edit"},
-	"studio_shots.reorder":              {"edit"},
-	"studio_shots.add":                  {"edit"},
-	"studio_shots.select":               {"edit"},
-	"studio_shots.frame_from_output":    {"edit"},
-	"studio_shots.accept":               {"edit"},
-	"studio_shots.redo":                 {"edit"},
-	"studio_shots.keep":                 {"edit"},
-	"studio_shots.import":               {"edit"},
-	"studio_shots.reframe":              {"edit"},
-	"studio_shots.vo_suggest":           {"edit"},
-	"studio_shots.libclip":              {"edit"},
-	"studio_shots.libclip_isolate":      {"edit"},
-	"studio_shots.clear_voice":          {"edit"},
-	"studio_shots.add_still":            {"edit"},
-	"studio_shots.patch_still":          {"edit"},
-	"studio_shots.remove_still":         {"edit"},
-	"studio_shots.render":               {"spend"},
-	"studio_shots.render_all":           {"spend"},
-	"studio_shots.render_frame":         {"spend"},
-	"studio_shots.collect":              {"edit"},
-	"studio_shots.head":                 {"read"},
-	"studio_shots.genstrip":             {"read"},
-	"studio_layers.set":                 {"edit"},
-	"studio_layers.list":                {"read"},
-	"studio_layers.add":                 {"edit"},
-	"studio_layers.remove":              {"edit"},
-	"studio_layers.recipes":             {"read"},
-	"studio_layers.preview":             {"read"},
-	"studio_audio.get":                  {"read"},
-	"studio_audio.set":                  {"edit"},
-	"studio_audio.check":                {"edit"},
-	"studio_audio.narrate":              {"spend"},
-	"studio_audio.mix":                  {"edit"},
-	"studio_director.draft":             {"edit"},
-	"studio_director.plan":              {"spend"},
-	"studio_director.script":            {"spend"},
-	"studio_director.template":          {"edit"},
-	"studio_director.smart":             {"spend"},
-	"studio_director.auto_refs":         {"edit"},
-	"studio_director.auto_slots":        {"edit"},
-	"studio_director.casting":           {"read"},
-	"studio_director.casting_adopt":     {"edit"},
-	"studio_director.import_production": {"edit"},
-	"studio_director.clear_smart":       {"edit"},
-	"studio_director.cast":              {"spend"},
-	"studio_export.stitch":              {"edit"},
-	"studio_export.stitch_status":       {"read"},
-	"studio_export.split":               {"edit"},
-	"studio_export.stitch_and_wait":     {"edit"},
-	"studio_library.list":               {"read"},
-	"studio_library.create":             {"edit"},
-	"studio_library.rename":             {"edit"},
-	"studio_library.delete":             {"edit"},
-	"studio_library.move":               {"edit"},
-	"studio_library.library":            {"read"},
-	"studio_create.guide":               {"read"},
-	"studio_create.quote":               {"read"},
-	"studio_create.storyboard":          {"edit"},
-	"studio_create.storyboard_draw":     {"spend"},
-	"studio_create.storyboard_versions": {"read"},
-	"studio_create.storyboard_revise":   {"edit"},
-	"studio_create.storyboard_clear":    {"edit"},
-	"studio_create.cut":                 {"spend"},
-	"studio_create.cut_status":          {"read"},
-	"studio_create.cut_recompose":       {"edit"},
-	"studio_clipper.quote":              {"read"},
-	"studio_clipper.analyze":            {"spend"},
-	"studio_clipper.list":               {"read"},
-	"studio_clipper.get":                {"read"},
-	"studio_clipper.thumb":              {"read"},
-	"studio_clipper.render":             {"spend"},
-	"studio_clipper.render_range":       {"spend"},
-	"studio_clipper.render_status":      {"read"},
-	"studio_talk_reel.guide":            {"read"},
-	"studio_talk_reel.styles":           {"read"},
-	"studio_talk_reel.quote":            {"read"},
-	"studio_talk_reel.start":            {"spend"},
-	"studio_talk_reel.list":             {"read"},
-	"studio_talk_reel.get":              {"read"},
-	"studio_talk_reel.words":            {"edit"},
-	"studio_talk_reel.plan":             {"edit"},
-	"studio_talk_reel.next":             {"edit"},
-	"studio_talk_reel.notes":            {"edit"},
-	"studio_talk_reel.cancel":           {"edit"},
-	"studio_footage.guide":              {"read"},
-	"studio_footage.sets":               {"read"},
-	"studio_footage.set":                {"read"},
-	"studio_footage.search":             {"read"},
-	"studio_footage.auto":               {"edit"},
-	"studio_footage.edits":              {"read"},
-	"studio_footage.edit_get":           {"read"},
-	"studio_footage.edit_update":        {"edit"},
-	"studio_footage.preview":            {"edit"},
-	"studio_footage.render":             {"spend"},
-	"studio_footage.status":             {"read"},
-	"studio_footage.tighten":            {"read"},
-	"studio_footage.broll":              {"read"},
-	"studio_footage.broll_ai":           {"spend"},
-	"studio_footage.broll_ai_get":       {"read"},
-	"studio_compiler.options":           {"read"},
-	"studio_compiler.compile":           {"spend"},
-	"studio_compiler.refine":            {"spend"},
-	"studio_compiler.adapt":             {"read"},
-	"studio_compiler.run":               {"spend"},
-	"studio_compiler.job":               {"read"},
-	"studio_longcut.plan":               {"edit"},
-	"studio_longcut.run":                {"spend"},
-	"studio_longcut.status":             {"read"},
-	"studio_assets.ref_sources":         {"read"},
-	"studio_assets.versions":            {"read"},
-	"studio_assets.view":                {"read"},
-	"studio_assets.memories":            {"read"},
-	"studio_assets.add_memory":          {"edit"},
-	"studio_assets.voice":               {"read"},
-	"studio_assets.delete_voice":        {"edit"},
-	"studio_assets.delete":              {"edit"},
-	"studio_outputs.get":                {"read"},
-	"studio_outputs.show":               {"read"},
-	"studio_storyboard.show":            {"read"},
-	"studio_storyboard.approve":         {"edit"},
-	"studio_storyboard.draw":            {"spend"},
-	"studio_storyboard.revise":          {"edit"},
-	"studio_cast.pick":                  {"read"},
-	"studio_cast.show":                  {"read"},
-	"studio_cast.choose":                {"edit"},
-	"studio_cast.thumbs":                {"read"},
-	"studio_cast.result":                {"read"},
-	"studio_confirm.show":               {"read"},
-	"studio_confirm.decide":             {"read"},
-	"studio_confirm.wait":               {"read"},
-	"studio_browse.show":                {"read"},
-	"studio_browse.list":                {"read"},
-	"studio_browse.thumbs":              {"read"},
-	"studio_collage.guide":              {"read"},
-	"studio_collage.options":            {"read"},
-	"studio_collage.auto":               {"edit"},
-	"studio_collage.auto_step":          {"spend"},
-	"studio_collage.plan":               {"edit"},
-	"studio_collage.replan":             {"edit"},
-	"studio_collage.list":               {"read"},
-	"studio_collage.get":                {"read"},
-	"studio_collage.pick":               {"edit"},
-	"studio_collage.revise":             {"edit"},
-	"studio_collage.edit":               {"edit"},
-	"studio_collage.approve":            {"edit"},
-	"studio_collage.quote":              {"read"},
-	"studio_collage.render_stills":      {"spend"},
-	"studio_collage.render_videos":      {"spend"},
-	"studio_collage.collect":            {"edit"},
-	"studio_collage.adopt":              {"edit"},
-	"studio_collage.view":               {"read"},
-	"studio_collage.film":               {"edit"},
-	"studio_collage.qa":                 {"read"},
-	"studio_collage.delete":             {"edit"},
-	"studio_paper.guide":                {"read"},
-	"studio_paper.options":              {"read"},
-	"studio_paper.plan":                 {"edit"},
-	"studio_paper.list":                 {"read"},
-	"studio_paper.get":                  {"read"},
-	"studio_paper.revise":               {"edit"},
-	"studio_paper.edit":                 {"edit"},
-	"studio_paper.approve":              {"edit"},
-	"studio_paper.quote":                {"read"},
-	"studio_paper.render_art":           {"spend"},
-	"studio_paper.collect":              {"edit"},
-	"studio_paper.adopt":                {"edit"},
-	"studio_paper.voice":                {"edit"},
-	"studio_paper.storyboard":           {"edit"},
-	"studio_paper.view":                 {"read"},
-	"studio_paper.render":               {"spend"},
-	"studio_paper.delete":               {"edit"},
+	"studio.list_assets":                     {"read"},
+	"studio.match_cast":                      {"edit"},
+	"studio.get_asset":                       {"read"},
+	"studio.list_gallery":                    {"read"},
+	"studio.search_library":                  {"read"},
+	"studio.list_jobs":                       {"read"},
+	"studio.select_version":                  {"edit"},
+	"studio.import_reference_video":          {"spend"},
+	"studio.extract_music":                   {"spend"},
+	"studio.extract_music_status":            {"read"},
+	"studio.list_productions":                {"read"},
+	"studio.get_production":                  {"read"},
+	"studio.list_templates":                  {"read"},
+	"studio.list_video_models":               {"read"},
+	"studio.list_image_styles":               {"read"},
+	"studio.get_image_style":                 {"read"},
+	"studio.search_motion_templates":         {"read"},
+	"studio.get_motion_template":             {"read"},
+	"studio.preview_motion_template":         {"edit"},
+	"studio.render_motion_template":          {"spend"},
+	"studio.render_paper_reel":               {"spend"},
+	"studio.motion_render_status":            {"read"},
+	"studio.cancel_motion_render":            {"edit"},
+	"studio.list_scene_templates":            {"read"},
+	"studio.generate_scene_template":         {"edit"},
+	"studio.apply_scene_template":            {"edit"},
+	"studio.estimate_cost":                   {"read"},
+	"studio.set_shot_selection":              {"edit"},
+	"studio.generate_image":                  {"spend"},
+	"studio.generate_video":                  {"spend"},
+	"studio.lip_sync":                        {"spend"},
+	"studio.avatar_video":                    {"spend"},
+	"studio.create_asset":                    {"edit"},
+	"studio.process_asset":                   {"spend"},
+	"studio.edit_asset":                      {"spend"},
+	"studio.rename_asset":                    {"edit"},
+	"studio.set_image_model":                 {"edit"},
+	"studio.analyze_refs":                    {"edit"},
+	"studio.ad_questions":                    {"edit"},
+	"studio.ad_prompt":                       {"edit"},
+	"studio.ad_chat":                         {"edit"},
+	"studio.ad_storyboard":                   {"edit"},
+	"studio.prompt_guide":                    {"read"},
+	"studio.storyboard_plan":                 {"edit"},
+	"studio.draw_storyboard":                 {"edit", "spend"},
+	"studio.storyboard_revise":               {"edit"},
+	"studio.storyboard_video":                {"edit", "spend"},
+	"studio.create_production":               {"edit"},
+	"studio.save_storyboard":                 {"edit"},
+	"studio.accept_storyboard":               {"edit"},
+	"studio.set_production_video_model":      {"edit"},
+	"studio.montage_production":              {"edit"},
+	"studio.record_clip":                     {"edit"},
+	"studio.finalize_production":             {"edit"},
+	"studio.stitch_production":               {"edit"},
+	"studio.delete_production":               {"edit"},
+	"studio.get_av_plan":                     {"read"},
+	"studio.set_av_plan":                     {"edit"},
+	"studio.check_shot_plan":                 {"read"},
+	"studio.plan_music":                      {"edit"},
+	"studio.preview_narration":               {"spend"},
+	"studio.synthesize_narration":            {"spend"},
+	"studio.mix_and_finalize":                {"edit"},
+	"studio.list_folders":                    {"read"},
+	"studio.create_folder":                   {"edit"},
+	"studio.move_to_folder":                  {"edit"},
+	"studio.use_output_as_input":             {"edit"},
+	"studio.list_image_models":               {"read"},
+	"studio.upload_asset":                    {"edit"},
+	"studio.ig_status":                       {"read"},
+	"studio.social_accounts":                 {"read"},
+	"studio.ig_recent_media":                 {"read"},
+	"studio.ig_list_posts":                   {"read"},
+	"studio.ig_schedule_post":                {"publish"},
+	"studio.ig_update_post":                  {"publish"},
+	"studio.ig_delete_post":                  {"publish"},
+	"studio.ig_publish_now":                  {"publish"},
+	"studio.ig_caption":                      {"edit"},
+	"studio.ig_autoplan":                     {"read"},
+	"studio.blog_styles":                     {"read"},
+	"studio.blog_sites":                      {"read"},
+	"studio.blog_site_save":                  {"edit"},
+	"studio.blog_list_posts":                 {"read"},
+	"studio.blog_create_post":                {"edit"},
+	"studio.blog_update_post":                {"publish"},
+	"studio.blog_delete_post":                {"publish"},
+	"studio.blog_generate":                   {"spend", "publish"},
+	"studio.blog_embed_code":                 {"read"},
+	"studio.social_comments":                 {"read"},
+	"studio.social_insights":                 {"read"},
+	"studio.social_reply":                    {"publish"},
+	"studio.social_hide":                     {"publish"},
+	"studio.social_delete":                   {"publish"},
+	"studio.social_like":                     {"publish"},
+	"studio.social_dm_flows":                 {"read"},
+	"studio.social_dm_media":                 {"read"},
+	"studio.social_dm_flow_save":             {"publish"},
+	"studio.social_dm_flow_enable":           {"publish"},
+	"studio.social_dm_flow_delete":           {"publish"},
+	"studio.brand_list_posts":                {"read"},
+	"studio.brand_create_post":               {"publish"},
+	"studio.brand_delete_post":               {"publish"},
+	"studio.motion_direct":                   {"spend"},
+	"studio.motion_direct_status":            {"read"},
+	"studio.motion_direct_reply":             {"edit"},
+	"studio.motion_direct_cancel":            {"edit"},
+	"studio.get_motion_catalog":              {"read"},
+	"studio.list_motion_drafts":              {"read"},
+	"studio.get_motion_draft":                {"read"},
+	"studio.motion_create":                   {"edit"},
+	"studio.motion_revise":                   {"spend"},
+	"studio.motion_edit":                     {"edit"},
+	"studio.motion_open":                     {"edit"},
+	"studio.motion_ref":                      {"spend"},
+	"studio.motion_ref_status":               {"read"},
+	"studio.motion_ref_reread":               {"spend"},
+	"studio.list_motion_refs":                {"read"},
+	"studio.motion_ref_quote":                {"read"},
+	"studio.set_motion_ref_bounds":           {"edit"},
+	"studio.delete_motion_ref":               {"edit"},
+	"studio.list_motion_jobs":                {"read"},
+	"studio.list_motion_brands":              {"read"},
+	"studio.save_motion_brand":               {"edit"},
+	"studio.delete_motion_brand":             {"edit"},
+	"studio.delete_motion_draft":             {"edit"},
+	"studio.get_motion_history":              {"read"},
+	"studio.list_motion_versions":            {"read"},
+	"studio.save_motion_version":             {"edit"},
+	"studio.restore_motion_version":          {"edit"},
+	"studio.undo_motion":                     {"edit"},
+	"studio.export_motion_draft":             {"spend"},
+	"studio.motion_export_status":            {"read"},
+	"studio.cancel_motion_export":            {"edit"},
+	"studio_project.list":                    {"read"},
+	"studio_project.get":                     {"read"},
+	"studio_project.create":                  {"edit"},
+	"studio_project.analyze":                 {"spend"},
+	"studio_project.composite":               {"edit"},
+	"studio_project.settings":                {"edit"},
+	"studio_project.replan":                  {"edit"},
+	"studio_project.reblueprint":             {"edit"},
+	"studio_project.notes":                   {"edit"},
+	"studio_project.start":                   {"edit"},
+	"studio_project.reopen":                  {"edit"},
+	"studio_project.variant":                 {"edit"},
+	"studio_project.translate":               {"edit"},
+	"studio_project.checkpoint":              {"edit"},
+	"studio_project.versions":                {"read"},
+	"studio_project.restore":                 {"edit"},
+	"studio_project.version_fields":          {"read"},
+	"studio_project.delete_version":          {"edit"},
+	"studio_project.lint":                    {"read"},
+	"studio_project.log":                     {"read"},
+	"studio_project.delete":                  {"edit"},
+	"studio_project.estimate":                {"read"},
+	"studio_project.strip":                   {"read"},
+	"studio_shots.patch":                     {"edit"},
+	"studio_shots.reorder":                   {"edit"},
+	"studio_shots.add":                       {"edit"},
+	"studio_shots.select":                    {"edit"},
+	"studio_shots.frame_from_output":         {"edit"},
+	"studio_shots.accept":                    {"edit"},
+	"studio_shots.redo":                      {"edit"},
+	"studio_shots.keep":                      {"edit"},
+	"studio_shots.import":                    {"edit"},
+	"studio_shots.reframe":                   {"edit"},
+	"studio_shots.vo_suggest":                {"edit"},
+	"studio_shots.libclip":                   {"edit"},
+	"studio_shots.libclip_isolate":           {"edit"},
+	"studio_shots.clear_voice":               {"edit"},
+	"studio_shots.add_still":                 {"edit"},
+	"studio_shots.patch_still":               {"edit"},
+	"studio_shots.remove_still":              {"edit"},
+	"studio_shots.render":                    {"spend"},
+	"studio_shots.render_all":                {"spend"},
+	"studio_shots.render_frame":              {"spend"},
+	"studio_shots.collect":                   {"edit"},
+	"studio_shots.head":                      {"read"},
+	"studio_shots.genstrip":                  {"read"},
+	"studio_layers.set":                      {"edit"},
+	"studio_layers.list":                     {"read"},
+	"studio_layers.add":                      {"edit"},
+	"studio_layers.remove":                   {"edit"},
+	"studio_layers.recipes":                  {"read"},
+	"studio_layers.preview":                  {"read"},
+	"studio_audio.get":                       {"read"},
+	"studio_audio.set":                       {"edit"},
+	"studio_audio.check":                     {"edit"},
+	"studio_audio.narrate":                   {"spend"},
+	"studio_audio.mix":                       {"edit"},
+	"studio_director.draft":                  {"edit"},
+	"studio_director.plan":                   {"spend"},
+	"studio_director.script":                 {"spend"},
+	"studio_director.template":               {"edit"},
+	"studio_director.smart":                  {"spend"},
+	"studio_director.auto_refs":              {"edit"},
+	"studio_director.auto_slots":             {"edit"},
+	"studio_director.casting":                {"read"},
+	"studio_director.casting_adopt":          {"edit"},
+	"studio_director.import_production":      {"edit"},
+	"studio_director.clear_smart":            {"edit"},
+	"studio_director.cast":                   {"spend"},
+	"studio_export.stitch":                   {"edit"},
+	"studio_export.stitch_status":            {"read"},
+	"studio_export.split":                    {"edit"},
+	"studio_export.stitch_and_wait":          {"edit"},
+	"studio_library.list":                    {"read"},
+	"studio_library.create":                  {"edit"},
+	"studio_library.rename":                  {"edit"},
+	"studio_library.delete":                  {"edit"},
+	"studio_library.move":                    {"edit"},
+	"studio_library.library":                 {"read"},
+	"studio_create.guide":                    {"read"},
+	"studio_create.quote":                    {"read"},
+	"studio_create.storyboard":               {"edit"},
+	"studio_create.storyboard_draw":          {"spend"},
+	"studio_create.storyboard_versions":      {"read"},
+	"studio_create.storyboard_revise":        {"edit"},
+	"studio_create.storyboard_approve":       {"edit"},
+	"studio_create.storyboard_dialogue":      {"read"},
+	"studio_create.storyboard_dialogue_set":  {"edit"},
+	"studio_create.storyboard_dialogue_plan": {"edit"},
+	"studio_create.storyboard_clear":         {"edit"},
+	"studio_create.cut":                      {"spend"},
+	"studio_create.cut_status":               {"read"},
+	"studio_create.cut_recompose":            {"edit"},
+	"studio_create.wait_job":                 {"read"},
+	"studio_create.wait_approval":            {"read"},
+	"studio_clipper.quote":                   {"read"},
+	"studio_clipper.analyze":                 {"spend"},
+	"studio_clipper.list":                    {"read"},
+	"studio_clipper.get":                     {"read"},
+	"studio_clipper.thumb":                   {"read"},
+	"studio_clipper.render":                  {"spend"},
+	"studio_clipper.render_range":            {"spend"},
+	"studio_clipper.render_status":           {"read"},
+	"studio_talk_reel.guide":                 {"read"},
+	"studio_talk_reel.styles":                {"read"},
+	"studio_talk_reel.quote":                 {"read"},
+	"studio_talk_reel.start":                 {"spend"},
+	"studio_talk_reel.list":                  {"read"},
+	"studio_talk_reel.get":                   {"read"},
+	"studio_talk_reel.words":                 {"edit"},
+	"studio_talk_reel.plan":                  {"edit"},
+	"studio_talk_reel.next":                  {"edit"},
+	"studio_talk_reel.notes":                 {"edit"},
+	"studio_talk_reel.cancel":                {"edit"},
+	"studio_footage.guide":                   {"read"},
+	"studio_footage.sets":                    {"read"},
+	"studio_footage.set":                     {"read"},
+	"studio_footage.search":                  {"read"},
+	"studio_footage.auto":                    {"edit"},
+	"studio_footage.edits":                   {"read"},
+	"studio_footage.edit_get":                {"read"},
+	"studio_footage.edit_update":             {"edit"},
+	"studio_footage.preview":                 {"edit"},
+	"studio_footage.render":                  {"spend"},
+	"studio_footage.status":                  {"read"},
+	"studio_footage.tighten":                 {"read"},
+	"studio_footage.broll":                   {"read"},
+	"studio_footage.broll_ai":                {"spend"},
+	"studio_footage.broll_ai_get":            {"read"},
+	"studio_compiler.options":                {"read"},
+	"studio_compiler.compile":                {"spend"},
+	"studio_compiler.refine":                 {"spend"},
+	"studio_compiler.adapt":                  {"read"},
+	"studio_compiler.run":                    {"spend"},
+	"studio_compiler.job":                    {"read"},
+	"studio_longcut.plan":                    {"edit"},
+	"studio_longcut.run":                     {"spend"},
+	"studio_longcut.status":                  {"read"},
+	"studio_assets.ref_sources":              {"read"},
+	"studio_assets.versions":                 {"read"},
+	"studio_assets.view":                     {"read"},
+	"studio_assets.memories":                 {"read"},
+	"studio_assets.add_memory":               {"edit"},
+	"studio_assets.voice":                    {"read"},
+	"studio_assets.delete_voice":             {"edit"},
+	"studio_assets.delete":                   {"edit"},
+	"studio_outputs.get":                     {"read"},
+	"studio_outputs.show":                    {"read"},
+	"studio_storyboard.show":                 {"read"},
+	"studio_storyboard.overview":             {"read"},
+	"studio_storyboard.approve":              {"edit"},
+	"studio_storyboard.draw":                 {"spend"},
+	"studio_storyboard.revise":               {"edit"},
+	"studio_storyboard.dialogue":             {"read"},
+	"studio_storyboard.dialogue_set":         {"edit"},
+	"studio_storyboard.dialogue_plan":        {"edit"},
+	"studio_cast.pick":                       {"read"},
+	"studio_cast.show":                       {"read"},
+	"studio_cast.choose":                     {"edit"},
+	"studio_cast.thumbs":                     {"read"},
+	"studio_cast.result":                     {"read"},
+	"studio_confirm.show":                    {"read"},
+	"studio_confirm.decide":                  {"read"},
+	"studio_confirm.wait":                    {"read"},
+	"studio_browse.show":                     {"read"},
+	"studio_browse.list":                     {"read"},
+	"studio_browse.thumbs":                   {"read"},
+	"studio_collage.guide":                   {"read"},
+	"studio_collage.options":                 {"read"},
+	"studio_collage.auto":                    {"edit"},
+	"studio_collage.auto_step":               {"spend"},
+	"studio_collage.plan":                    {"edit"},
+	"studio_collage.replan":                  {"edit"},
+	"studio_collage.list":                    {"read"},
+	"studio_collage.get":                     {"read"},
+	"studio_collage.pick":                    {"edit"},
+	"studio_collage.revise":                  {"edit"},
+	"studio_collage.edit":                    {"edit"},
+	"studio_collage.approve":                 {"edit"},
+	"studio_collage.quote":                   {"read"},
+	"studio_collage.render_stills":           {"spend"},
+	"studio_collage.render_videos":           {"spend"},
+	"studio_collage.collect":                 {"edit"},
+	"studio_collage.adopt":                   {"edit"},
+	"studio_collage.view":                    {"read"},
+	"studio_collage.film":                    {"edit"},
+	"studio_collage.qa":                      {"read"},
+	"studio_collage.delete":                  {"edit"},
+	"studio_paper.guide":                     {"read"},
+	"studio_paper.options":                   {"read"},
+	"studio_paper.plan":                      {"edit"},
+	"studio_paper.list":                      {"read"},
+	"studio_paper.get":                       {"read"},
+	"studio_paper.revise":                    {"edit"},
+	"studio_paper.edit":                      {"edit"},
+	"studio_paper.approve":                   {"edit"},
+	"studio_paper.quote":                     {"read"},
+	"studio_paper.render_art":                {"spend"},
+	"studio_paper.collect":                   {"edit"},
+	"studio_paper.adopt":                     {"edit"},
+	"studio_paper.voice":                     {"edit"},
+	"studio_paper.storyboard":                {"edit"},
+	"studio_paper.view":                      {"read"},
+	"studio_paper.render":                    {"spend"},
+	"studio_paper.delete":                    {"edit"},
+	"studio_playbook.list":                   {"edit"},
+	"studio_playbook.start":                  {"edit"},
+	"studio_playbook.step":                   {"edit"},
+	"studio_playbook.status":                 {"edit"},
+	"studio_playbook.cancel":                 {"edit"},
 }
 
 // StudioCore wraps the studio tool — Studio: assets, generation and publishing. Main Studio entry point for visual creation on your own account: character/scene/prop assets, the output and reference library, generation jobs, and actual image and video rendering. Pick an operation with `action`. Video always goes through storyboard first (`storyboard_plan` -> `draw_storyboard` -> user approval -> `storyboard_video`); `generate_video` is disabled. Async results differ by action: `generate_image` / `storyboard_video` return `outputs[]` with signed download links or a `pending` result to poll via `studio_outputs`; `process_asset` / `edit_asset` are polled with `get_asset`; narration and montage actions finish synchronously. It also covers motion-graphic drafts, motion template library, Director productions, audio/video plan, folders, social posting and SEO blog actions.
@@ -380,6 +394,16 @@ func (g StudioCore) ImportReferenceVideo(ctx context.Context, p Params) (*ToolRe
 	return g.c.CallAction(ctx, "studio", "import_reference_video", p)
 }
 
+// ExtractMusic: Paid: split the background music out of a library audio or video asset (`asset_id`) or an output (`output_id`), up to 600 s, and save it to the library (the voice is dropped). Returns a text beat map (`beatmap`) for cutting on the beat. Billed by actual compute, full refund on failure; on `pending` poll `extract_music_status`. Scopes: spend. Flags: paid.
+func (g StudioCore) ExtractMusic(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "extract_music", p)
+}
+
+// ExtractMusicStatus: Check progress or fetch the result of `extract_music` (`job_id`; free). Scopes: read.
+func (g StudioCore) ExtractMusicStatus(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "extract_music_status", p)
+}
+
 // ListProductions: List Director productions (storyboard-first ad projects). Scopes: read.
 func (g StudioCore) ListProductions(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "list_productions", p)
@@ -410,12 +434,12 @@ func (g StudioCore) GetImageStyle(ctx context.Context, p Params) (*ToolResult, e
 	return g.c.CallAction(ctx, "studio", "get_image_style", p)
 }
 
-// SearchMotionTemplates: Search the motion template library (313 third-party templates ranked S/A/B/C; free); results include `preview_url`, `tier` and `layer_guess` (layerable or fullframe). Scopes: read.
+// SearchMotionTemplates: Search the motion template library (313 templates ranked S/A/B/C by design quality: titles, kinetic type, logo reveals, transitions, charts, UI/product, social cards; free). Pass the user's own words as `query`; results include `preview_url` (4-frame preview), `tier` and `layer_guess` (layerable or fullframe). Scopes: read.
 func (g StudioCore) SearchMotionTemplates(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "search_motion_templates", p)
 }
 
-// GetMotionTemplate: Get one template in full: prompt, props (fields and defaults), composition (size/fps/frames), license and attribution; `include_code:true` adds the source. Scopes: read.
+// GetMotionTemplate: Get one template: props (fields and defaults), composition (size/fps/frames), preview and license. Change a template only through its props. Scopes: read.
 func (g StudioCore) GetMotionTemplate(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "get_motion_template", p)
 }
@@ -443,41 +467,6 @@ func (g StudioCore) MotionRenderStatus(ctx context.Context, p Params) (*ToolResu
 // CancelMotionRender: Cancel a motion template render. Scopes: edit.
 func (g StudioCore) CancelMotionRender(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "cancel_motion_render", p)
-}
-
-// ForkMotionTemplate: Copy a template into the user's own fork when props cannot give the effect; then `edit_motion_fork`, `preview_motion_template {fork_id}`, and after approval `render_motion_template {fork_id}`. Scopes: edit.
-func (g StudioCore) ForkMotionTemplate(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "fork_motion_template", p)
-}
-
-// ListMotionForks: List the user's template forks. Scopes: read.
-func (g StudioCore) ListMotionForks(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "list_motion_forks", p)
-}
-
-// GetMotionFork: Get one template fork. Scopes: read.
-func (g StudioCore) GetMotionFork(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "get_motion_fork", p)
-}
-
-// EditMotionFork: Edit a template fork (find/replace patches, helper files, size/duration meta); an edit that does not compile is not saved and the error location is returned. Scopes: edit.
-func (g StudioCore) EditMotionFork(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "edit_motion_fork", p)
-}
-
-// MotionForkSource: Get the source of a template fork. Scopes: read.
-func (g StudioCore) MotionForkSource(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "motion_fork_source", p)
-}
-
-// RestoreMotionFork: Restore a template fork to an earlier state. Scopes: edit.
-func (g StudioCore) RestoreMotionFork(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "restore_motion_fork", p)
-}
-
-// DeleteMotionFork: Delete a template fork. Scopes: edit.
-func (g StudioCore) DeleteMotionFork(ctx context.Context, p Params) (*ToolResult, error) {
-	return g.c.CallAction(ctx, "studio", "delete_motion_fork", p)
 }
 
 // ListSceneTemplates: List the 35 ready-made scene templates (each shot has a first frame and camera move written), so a pick gives a full storyboard. Scopes: read.
@@ -513,6 +502,16 @@ func (g StudioCore) GenerateImage(ctx context.Context, p Params) (*ToolResult, e
 // GenerateVideo: Disabled; use the storyboard flow and `storyboard_video` instead. Scopes: spend. Flags: paid.
 func (g StudioCore) GenerateVideo(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "generate_video", p)
+}
+
+// LipSync: Paid: lip sync. An existing clip `video_ref` plus a voice track `audio_ref`; only the mouth is redrawn to match the voice, face and background stay. Clip 2-10 s, 720-1920 px per side (rejected before any charge otherwise; split longer clips at pauses). Billed per second with a quote card; no storyboard needed. Scopes: spend. Flags: paid.
+func (g StudioCore) LipSync(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "lip_sync", p)
+}
+
+// AvatarVideo: Paid: talking avatar. One photo `image_ref` plus a voice track `audio_ref` gives a new talking-head video (head motion, expression, blinks and mouth are generated). Length = voice length, 2-300 s; photo at least 300 px per side, aspect 1:2.5 to 2.5:1; `avatar_mode` `std` (half price) or `pro`. Billed per second of voice with a quote card; no storyboard needed. Scopes: spend. Flags: paid.
+func (g StudioCore) AvatarVideo(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "avatar_video", p)
 }
 
 // CreateAsset: Create a new character/scene/prop draft from one reference image (free). Scopes: edit.
@@ -830,7 +829,12 @@ func (g StudioCore) SocialDmFlows(ctx context.Context, p Params) (*ToolResult, e
 	return g.c.CallAction(ctx, "studio", "social_dm_flows", p)
 }
 
-// SocialDmFlowSave: Destructive (needs `confirm: true`): create or edit a flow; `flow={media_id?, trigger:'all'|'keyword', keywords, public_reply?, steps:[{id, text, buttons:[{title, goto|url}], handoff}]}`. Scopes: publish. Flags: confirm.
+// SocialDmMedia: List the latest 24 posts of the Chat Gate Instagram account (to get a `media_id`); with several accounts connected it returns `accounts` first, then pass `ig_user_id`. Scopes: read.
+func (g StudioCore) SocialDmMedia(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "social_dm_media", p)
+}
+
+// SocialDmFlowSave: Destructive (needs `confirm: true`): create or edit a flow; `flow={ig_user_id?, media_id?, trigger:'all'|'keyword', keywords, sources?:['comment'|'dm'|'story'], public_reply?, steps:[{id, text, buttons:[{title, goto|url}], handoff}]}`. Scopes: publish. Flags: confirm.
 func (g StudioCore) SocialDmFlowSave(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "social_dm_flow_save", p)
 }
@@ -838,6 +842,11 @@ func (g StudioCore) SocialDmFlowSave(ctx context.Context, p Params) (*ToolResult
 // SocialDmFlowEnable: Turn a flow on or off (`flow_id` + `enabled`). Scopes: publish.
 func (g StudioCore) SocialDmFlowEnable(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio", "social_dm_flow_enable", p)
+}
+
+// SocialDmFlowDelete: Destructive (needs `confirm: true`): delete a flow (`flow_id`); use `enable` to pause instead. Scopes: publish. Flags: confirm.
+func (g StudioCore) SocialDmFlowDelete(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio", "social_dm_flow_delete", p)
 }
 
 // BrandListPosts: List the brand feed. Scopes: read.
@@ -1439,7 +1448,7 @@ func (g StudioCreate) Quote(ctx context.Context, p Params) (*ToolResult, error) 
 	return g.c.CallAction(ctx, "studio_create", "quote", p)
 }
 
-// Storyboard: Step 2 storyboard (free, AI watches the video); returns `{version, plan_id, fee_hwt}`; `pending` = retry in 10 s; unmatched character returns `needs_cast` (retry with `args.cast_pick`). Scopes: edit.
+// Storyboard: Step 2 storyboard (free, AI watches the video). Cut modes take the same sources as `cut`; plain Create takes `{prompt, duration?, ratio?, refs?, sb_style?:'explainer', dialogue_language?, speakers?}`. `dialogue_language` / `speakers {name: language}` set the spoken language and write the dialogue sheet at once (default: the user's interface language). Returns `{version, plan_id, fee_hwt}`; `pending` = retry in 10 s with the same args; an unmatched character returns `needs_cast` (retry with `args.cast_pick`). Scopes: edit.
 func (g StudioCreate) Storyboard(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_create", "storyboard", p)
 }
@@ -1454,9 +1463,29 @@ func (g StudioCreate) StoryboardVersions(ctx context.Context, p Params) (*ToolRe
 	return g.c.CallAction(ctx, "studio_create", "storyboard_versions", p)
 }
 
-// StoryboardRevise: Revise the storyboard in plain language (free), creating a new version; args `{instruction}`; without `instruction` it just redraws a new version unchanged. Scopes: edit.
+// StoryboardRevise: Revise the storyboard in plain language (free), creating a new version; args `{instruction, dialogue_language?, speakers?}`. Without `instruction` it draws a new version unchanged. `dialogue_language` / `speakers` rewrite the dialogue sheet of the new version in that language (free). Scopes: edit.
 func (g StudioCreate) StoryboardRevise(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_create", "storyboard_revise", p)
+}
+
+// StoryboardApprove: Destructive (needs `confirm: true`): record that the user approved this storyboard version (no card; same as `studio_storyboard.approve`). Call only after the user has seen the storyboard and clearly approved. args `{video_style?}`: `realistic` (default), `film`, `commercial`, `anime`, `animation3d` or `match`. Scopes: edit. Flags: confirm.
+func (g StudioCreate) StoryboardApprove(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "storyboard_approve", p)
+}
+
+// StoryboardDialogue: Read the storyboard dialogue sheet (no card; same as `studio_storyboard.dialogue`). args `{plan?: false}`. Scopes: read.
+func (g StudioCreate) StoryboardDialogue(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "storyboard_dialogue", p)
+}
+
+// StoryboardDialogueSet: Set the storyboard dialogue sheet by hand (no card, free; same as `studio_storyboard.dialogue_set`). args `{lines:[{who, t0, t1, text, delivery?}]}`; `[]` = nobody speaks. Scopes: edit.
+func (g StudioCreate) StoryboardDialogueSet(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "storyboard_dialogue_set", p)
+}
+
+// StoryboardDialoguePlan: Let AI write the storyboard dialogue sheet (no card, free; same as `studio_storyboard.dialogue_plan`). args `{language?, speakers?, direction?, replace?, narration?, narration_lang?}`. Scopes: edit.
+func (g StudioCreate) StoryboardDialoguePlan(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "storyboard_dialogue_plan", p)
 }
 
 // StoryboardClear: Destructive (needs `confirm: true`): clear the draft versions of the whole storyboard board (finished storyboard images stay in the library). Scopes: edit. Flags: confirm.
@@ -1477,6 +1506,16 @@ func (g StudioCreate) CutStatus(ctx context.Context, p Params) (*ToolResult, err
 // CutRecompose: Rebuild the top/bottom split view when the AI video finished but the split was not produced (free, idempotent). Scopes: edit.
 func (g StudioCreate) CutRecompose(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_create", "cut_recompose", p)
+}
+
+// WaitJob: Wait for a video, image or cut job (`job_id`) or a storyboard image (`board` + `version`) without adding a card to the chat. The server waits up to `args.wait_sec` (default 45, max 50). Still running = call again; done = returns download links (same as `studio_outputs.get`). Use this to wait for results instead of polling `studio_outputs` or `studio_storyboard.show`, which add a card on every call. Scopes: read.
+func (g StudioCreate) WaitJob(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "wait_job", p)
+}
+
+// WaitApproval: Call right after `studio_confirm.show`: wait for the user to approve or decline the quote or permission card without adding a card to the chat (up to 50 s; `open` = undecided, call again or stop and wait for the user). args `{confirm_token|permission_token, timeout_sec?}`. On `approved`, repeat the original action with the same args plus the token (if the server already started it, the result comes back directly). Scopes: read.
+func (g StudioCreate) WaitApproval(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_create", "wait_approval", p)
 }
 
 // StudioClipper wraps the studio_clipper tool — Clip highlights from long video. Long-video highlight clipper: a long video is transcribed word by word, AI picks highlights, and short 9:16 vertical clips are rendered. The default motion-edit style is the note-explainer layout (hook, persistent topic title, word-by-word captions, paper-collage illustrations, Instagram copy); `layout: motion` keeps the original motion look. Use `quote` for prices, `analyze` to find candidates, then `render` or `render_range` to cut clips.
@@ -1676,7 +1715,7 @@ func (g StudioCompiler) Refine(ctx context.Context, p Params) (*ToolResult, erro
 	return g.c.CallAction(ctx, "studio_compiler", "refine", p)
 }
 
-// Adapt: Convert a script into render parameters for a model without rendering. args `{result, model, resolution?, aspect?}`. Scopes: read.
+// Adapt: Convert a script into render settings for a model without rendering. args `{result (from compile, or result_id), model (id from list_video_models), resolution?, aspect?}`. Scopes: read.
 func (g StudioCompiler) Adapt(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_compiler", "adapt", p)
 }
@@ -1773,19 +1812,39 @@ func (g StudioStoryboard) Show(ctx context.Context, p Params) (*ToolResult, erro
 	return g.c.CallAction(ctx, "studio_storyboard", "show", p)
 }
 
+// Overview: Full-film storyboard overview (free): for a multi-act film (one board per act) every frame is laid out on one sheet, rows = acts, columns = frames, with frame numbers and seconds running across acts and each frame's action, dialogue and notes printed. Call once after every act is drawn. args `{acts:[{board, version?, title?, notes?[]}], title?, subtitle?}`. The sheet is saved to the library (Storyboard folder); returns `output_id`, `sheet_url`, `shots[]`; undrawn acts are listed in `skipped` (not an error). Scopes: read.
+func (g StudioStoryboard) Overview(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_storyboard", "overview", p)
+}
+
 // Approve: Destructive (needs `confirm: true`): record the user's approval of this version; only after they said approve. args `{video_style?}`: realistic (default), film, commercial, anime, animation3d, match. Scopes: edit. Flags: confirm.
 func (g StudioStoryboard) Approve(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_storyboard", "approve", p)
 }
 
-// Draw: Paid: draw an undrawn storyboard version as one image; call only when the user explicitly asks. args `{model?, seed?, draw_style?, arrows?}` as in `studio_create.storyboard_draw`. Scopes: spend. Flags: paid.
+// Draw: Paid: draw an undrawn storyboard version as one image (all frames on one sheet). This is what the plan card's draw button uses; agents should call `studio_create.storyboard_draw` instead (same result, no extra card). args `{model?, seed?, draw_style?, arrows?}`. A version already drawing or drawn is not billed again (returns `already`). Scopes: spend. Flags: paid.
 func (g StudioStoryboard) Draw(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_storyboard", "draw", p)
 }
 
-// Revise: Revise the storyboard in plain language (free, creates a new version that must be redrawn with `draw`). args `{instruction}`; without it a new version is drawn unchanged. Scopes: edit.
+// Revise: Revise the storyboard in plain language (free, creates a new version that must be redrawn). args `{instruction, language?, speakers?}`; without `instruction` a new version is drawn unchanged. `language` / `speakers` rewrite the dialogue sheet of the new version in that language. Scopes: edit.
 func (g StudioStoryboard) Revise(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_storyboard", "revise", p)
+}
+
+// Dialogue: Read the storyboard dialogue sheet: every line the film will speak, `{who, t0, t1, text, lang}` (the video model speaks this sheet, not the words in the `storyboard_video` prompt). A drawn board with no dialogue yet is planned in the background (interface language, free) and returns `planning: true`; call again in 15 s. args `{plan?: false}`. Scopes: read.
+func (g StudioStoryboard) Dialogue(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_storyboard", "dialogue", p)
+}
+
+// DialogueSet: Set the dialogue sheet by hand (free, replaces the current one). args `{lines:[{who, t0, t1, text, delivery?}]}`: `who` = a storyboard character name (from `speakers` in `dialogue`) or `NARRATION`; the language of `text` is the language spoken. `[]` = nobody speaks. Scopes: edit.
+func (g StudioStoryboard) DialogueSet(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_storyboard", "dialogue_set", p)
+}
+
+// DialoguePlan: Let AI write the dialogue sheet (free, it looks at the storyboard image). args `{language? (Mandarin, Cantonese, English, ...), speakers?:{name: language}, direction?, replace?, narration?, narration_lang?}`. With `language` the whole sheet is rewritten in that language. Returns every spoken line. Scopes: edit.
+func (g StudioStoryboard) DialoguePlan(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_storyboard", "dialogue_plan", p)
 }
 
 // StudioCast wraps the studio_cast tool — Pick a character. Character selection: before a storyboard or render, ask the user which character from the character library should be the lead. Hosts that support MCP Apps show a character card to tap; other hosts give the user a `pick_url` web page, or the user answers with a number and you call `choose`. After picking, pass `args.cast_pick:<pick_id>` to the storyboard or render call.
@@ -1824,7 +1883,7 @@ func (g StudioConfirm) Show(ctx context.Context, p Params) (*ToolResult, error) 
 	return g.c.CallAction(ctx, "studio_confirm", "show", p)
 }
 
-// Wait: Call right after `show` (or after giving the user the `approve_url`) to wait for the user's decision (up to 50 s; `open` means undecided, call again). args `{confirm_token|permission_token, timeout_sec?}`. Scopes: read.
+// Wait: Legacy: wait for the user's decision on the card (up to 50 s); every call adds one more waiting card to the chat. Prefer `studio_create.wait_approval` (same result, no card). args `{confirm_token|permission_token, timeout_sec?}`. Scopes: read.
 func (g StudioConfirm) Wait(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_confirm", "wait", p)
 }
@@ -1915,12 +1974,12 @@ func (g StudioCollage) Quote(ctx context.Context, p Params) (*ToolResult, error)
 	return g.c.CallAction(ctx, "studio_collage", "quote", p)
 }
 
-// RenderStills: Paid: render one still per sentence. args `{ns?, refs?:[…] (max 3), seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid.
+// RenderStills: Paid: render one finished still per sentence. args `{ns?:[sentence numbers] (default: every approved metaphor with no still or an expired one), refs?:[{asset_id|output_id|pillar,id, label}] (max 3 products or characters to appear), seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid.
 func (g StudioCollage) RenderStills(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_collage", "render_stills", p)
 }
 
-// RenderVideos: Paid: render first/last-frame animations (one per sentence: empty paper to still in `solo` and for sentence 1, previous still to this still in `flow`). args `{ns?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid.
+// RenderVideos: Paid: render one animation per sentence. args `{ns?}` (default: every approved still with no animation or an expired one); returns job ids, then `collect`. Scopes: spend. Flags: paid.
 func (g StudioCollage) RenderVideos(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_collage", "render_videos", p)
 }
@@ -1968,7 +2027,7 @@ func (g StudioPaper) Options(ctx context.Context, p Params) (*ToolResult, error)
 	return g.c.CallAction(ctx, "studio_paper", "options", p)
 }
 
-// Plan: Create a board. args `{topic (4-1500 chars), seconds? 12-30, language?, title?, voice?, mascot?, backdrops?, bed?, still_res?, notes?, refs?}`; returns `board_id`; script is AI-written in background. Scopes: edit.
+// Plan: Create a board. args `{topic (4-1500 chars), seconds? 12-30 (default 30), language?, title?, voice?, mascot? (default true), backdrops?: preset|generate, bed?, still_res?: 1K|2K|4K, notes?, refs?:[…] (product photos, max 3), layout?: auto (default: AI picks by topic and avoids the last 3 used) or a name from options.layouts, hook?}`; returns `board_id`; the script is AI-written in the background. Scopes: edit.
 func (g StudioPaper) Plan(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "plan", p)
 }
@@ -1988,7 +2047,7 @@ func (g StudioPaper) Revise(ctx context.Context, p Params) (*ToolResult, error) 
 	return g.c.CallAction(ctx, "studio_paper", "revise", p)
 }
 
-// Edit: Edit directly without AI (free). args `{scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?}`; names must come from `options`. Scopes: edit.
+// Edit: Edit directly without AI (free). args `{scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?, layout?, keyword?, brand?, end?:{ask?, handle?, bio?, line?}}` (`end` = end card; an empty `handle` removes it). Names must come from `options`. Scopes: edit.
 func (g StudioPaper) Edit(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "edit", p)
 }
@@ -2003,12 +2062,12 @@ func (g StudioPaper) Quote(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "quote", p)
 }
 
-// RenderArt: Paid: draw the elements (up to 6 per sheet; without `keys` all missing ones). args `{keys?, seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid.
+// RenderArt: Paid: draw the elements (without `keys`, all missing ones). args `{keys?, seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid.
 func (g StudioPaper) RenderArt(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "render_art", p)
 }
 
-// Collect: Collect results: finished elements are cut out automatically (`collected`/`pending`/`failed`); redraw missing ones with `render_art {keys}` (failed orders are refunded). Scopes: edit.
+// Collect: Collect results into the board (`collected`/`pending`/`failed`); missing elements are named, redraw them with `render_art {keys}` (failed orders are refunded). Scopes: edit.
 func (g StudioPaper) Collect(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "collect", p)
 }
@@ -2018,7 +2077,7 @@ func (g StudioPaper) Adopt(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "adopt", p)
 }
 
-// Voice: Free: synthesize narration, time the scenes to the real speech length, and produce music and sound effects. args `{voice?}` (30-90 s in the background). Scopes: edit.
+// Voice: Free: synthesize narration, time the scenes to the real speech length, and produce music and sound effects. args `{voice?}` (30-90 s in the background). Own narration instead of TTS: args `{vo:{asset_id|output_id} (a library audio file reading the script), lines?:[{start, sec}] (where each scene's line sits in the track; omitted = aligned by speech recognition)}`. Scopes: edit.
 func (g StudioPaper) Voice(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "voice", p)
 }
@@ -2041,6 +2100,34 @@ func (g StudioPaper) Render(ctx context.Context, p Params) (*ToolResult, error) 
 // Delete: Destructive (needs `confirm: true`): delete this board (elements and voice track are deleted; finished films in the library are not). Scopes: edit. Flags: confirm.
 func (g StudioPaper) Delete(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "studio_paper", "delete", p)
+}
+
+// StudioPlaybook wraps the studio_playbook tool — Studio playbooks. AlgoHash ready-made playbooks: one request and the server runs the whole flow (storyboard, quote, render). You only ask the user, show the cards and hand over the result.
+type StudioPlaybook struct{ c *Client }
+
+// List: List the playbooks and what each one needs to ask the user. Scopes: edit.
+func (g StudioPlaybook) List(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_playbook", "list", p)
+}
+
+// Start: Start a run: `{playbook, inputs}`; returns `run_id` and the next step. Scopes: edit.
+func (g StudioPlaybook) Start(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_playbook", "start", p)
+}
+
+// Step: Advance a run: `{run_id, plus the user's reply: approve:true / revise:"change" / confirm_token / permission_token / cast_pick}`; with no reply it keeps waiting (still generating). Scopes: edit.
+func (g StudioPlaybook) Step(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_playbook", "step", p)
+}
+
+// Status: See where a run is: `{run_id}`. Scopes: edit.
+func (g StudioPlaybook) Status(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_playbook", "status", p)
+}
+
+// Cancel: Cancel a run: `{run_id}`. Scopes: edit.
+func (g StudioPlaybook) Cancel(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "studio_playbook", "cancel", p)
 }
 
 // StudioClient is a typed client for the studio MCP server (https://console.algohash.ai/mcp/studio).
@@ -2068,6 +2155,7 @@ type StudioClient struct {
 	Browse     StudioBrowse
 	Collage    StudioCollage
 	Paper      StudioPaper
+	Playbook   StudioPlaybook
 }
 
 // NewStudio creates a studio client. The API key is sent as a Bearer token.
@@ -2096,5 +2184,11 @@ func NewStudio(apiKey string, opts ...Option) *StudioClient {
 		Browse:     StudioBrowse{c},
 		Collage:    StudioCollage{c},
 		Paper:      StudioPaper{c},
+		Playbook:   StudioPlaybook{c},
 	}
+}
+
+// StudioManual calls studio_manual — Read the manual for this server: rules, errors, recipes and per-tool help. Free, read-only, no scope needed.
+func (c *StudioClient) StudioManual(ctx context.Context, p Params) (*ToolResult, error) {
+	return c.Call(ctx, "studio_manual", p)
 }

@@ -45,7 +45,7 @@
     <rect width="8" height="150" rx="4" fill="#8b7dff"/>
     <text x="34" y="48" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#e6edf3">Studio</text>
     <text x="34" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="20" fill="#9198a1">/mcp/studio</text>
-    <text x="34" y="122" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#8b7dff">22 tools · 329 actions</text>
+    <text x="34" y="122" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#8b7dff">24 tools · 343 actions</text>
     <text x="486" y="48" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#9198a1" text-anchor="end">read edit spend publish</text>
   </g>
   
@@ -54,7 +54,7 @@
     <rect width="8" height="150" rx="4" fill="#3fb950"/>
     <text x="34" y="48" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#e6edf3">Team</text>
     <text x="34" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="20" fill="#9198a1">/mcp/team</text>
-    <text x="34" y="122" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#3fb950">6 tools · 70 actions</text>
+    <text x="34" y="122" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#3fb950">7 tools · 71 actions</text>
     <text x="486" y="48" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#9198a1" text-anchor="end">read edit spend</text>
   </g>
   

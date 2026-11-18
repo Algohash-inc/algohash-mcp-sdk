@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="バージョン 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 個の MCP ツール">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 個のアクション">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="バージョン 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 個の MCP ツール">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 個のアクション">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="ランタイム依存ゼロ">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT ライセンス"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 1 つの SDK で 3 つのサーバー** - Studio、Team、Open API が、同じクライアントの形、同じ結果型、同じエラーモデルを共有します
 - **🛡️ デフォルトで安全** - 有料または公開を伴う Studio と Team のステップは、AlgoHash 上であなたが承認するまで実行されません。エージェントが自分の支出を自分で承認することはできません
-- **🧬 型付き・自動生成** - 399 個のアクションを、オープンな仕様からそのままラップしてドキュメント化しているため、SDK がサーバーとずれることはありません
+- **🧬 型付き・自動生成** - 414 個のアクションを、オープンな仕様からそのままラップしてドキュメント化しているため、SDK がサーバーとずれることはありません
 - **🪶 依存ゼロ** - プラットフォーム標準の `fetch`、`urllib`、`net/http` だけを使用します。監査やバージョン固定、パッチ適用の対象が増えることはありません
 - **🧪 キーなしで試せる** - ローカルのモックサーバーで、アカウントも支出もなしにすべてのサンプルとテストを実行できます
 
@@ -71,10 +71,12 @@
 ### 1. インストール
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+PyPI（`algohash-mcp`）のパッケージはまだ公開されていません。Python SDK は今はこのリポジトリからインストールしてください。
 
 ### 2. キーを取得する
 
@@ -83,6 +85,12 @@ go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+ターミナルで作業していますか？キーをコピーせずに、スマートフォンでサインインできます。支払いは自分でオンにするまでオフです。[ターミナルログインの説明 →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. 最初の呼び出しを行う
@@ -113,7 +121,7 @@ console.log(assets.status, assets.data);
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -186,7 +194,9 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 - あなたの Studio アカウント: ライブラリ、画像、動画、ストーリーボード、エディタ、出力、SNS 投稿
 - スコープは `read`、`edit`、`spend`、`publish`。新しいキーのデフォルトは `read` + `edit` + `spend` です
 - ストーリーボードが先: すべての動画は、あなたが承認したストーリーボードから始まります
-- 22 ツール · 329 アクション
+- プレイブック: 1 つの依頼で、用意済みのフロー（ストーリーボード、見積もり、レンダリング）を最後まで実行します（`studio_playbook`）
+- そのほか: ストーリーボードのセリフ表、ビートマップ付きの音楽抽出、リップシンク、トーキングアバター、コメント → DM フロー
+- 24 ツール · 343 アクション
 
 ### 🟢 Team
 
@@ -194,7 +204,8 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 - スコープは `read`、`edit`、`spend`。新しいキーのデフォルトは `read` + `edit` です
 - 支出、削除、下書きの適用、リスクのあるツールの有効化の前には、必ず確認を求めます
 - `client_ref` により、作成系の呼び出しを安全に再試行できます。下書きには `rev` が付きます
-- 6 ツール · 70 アクション
+- チームメイトごとの Plus モード。ミスが許されない作業向けです（`team.set_plus`）
+- 7 ツール · 71 アクション
 
 ### 🟠 Open API
 
@@ -217,6 +228,18 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 ## 🔌 AI アプリに接続する
 
 コードは不要です。アプリにサーバーの URL を指定して、サインインするだけです。
+
+Claude なら 3 ステップです。ChatGPT でもサーバー URL は同じです:
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. 名前を **AlgoHash Studio** にして URL を貼り付け、**Add** をクリック
+3. **Connect** をクリックし、Studio にサインインして承認
+
+支出はデフォルトでオフです。課金のたびに、見積もりカードであなたの承認を待ちます。[セットアップガイド →](https://console.algohash.ai/mcp/studio/connect)
 
 | ホスト | 手順 |
 |----------|----------|
@@ -298,6 +321,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team: 作業をデプロイする** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API: 見積もり → 生成** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **自分のエージェント用のツール** | `07-agent-context.mjs` | | |
+| **プレイブックを実行** | `08-playbook.mjs` | `08_playbook.py` | |
 
 サンプルは、有料または公開を伴うステップの前に、ターミナルで確認を求めます。ターミナルがない場合は拒否します。
 

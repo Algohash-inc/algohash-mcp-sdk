@@ -3,7 +3,8 @@
 `algohash-mcp` — Python 3.9+, standard library only (synchronous, `urllib`).
 
 ```bash
-pip install algohash-mcp
+# Not on PyPI yet: install straight from this repository.
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"
 ```
 
 ## Clients

@@ -50,7 +50,7 @@ func TestInitializeAndList(t *testing.T) {
 		t.Fatalf("init: %v %v", r, err)
 	}
 	tools, err := s.ListTools(ctx)
-	if err != nil || len(tools) != 22 {
+	if err != nil || len(tools) != 24 {
 		t.Fatalf("tools: %d %v", len(tools), err)
 	}
 }
@@ -70,7 +70,7 @@ func TestReadAndScope(t *testing.T) {
 		t.Fatalf("preflight: %s local=%v", r.Code, r.Local)
 	}
 	allowed, denied := studio("smk_mock_read").AllowedActions([]string{"read"})
-	if len(allowed)+len(denied) != 329 {
+	if len(allowed)+len(denied) != 343 {
 		t.Fatalf("matrix %d", len(allowed)+len(denied))
 	}
 }

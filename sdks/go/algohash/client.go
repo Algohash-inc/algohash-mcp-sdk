@@ -465,7 +465,7 @@ func (c *Client) Initialize(ctx context.Context) (map[string]any, error) {
 	}
 	r, err := c.RPC(ctx, "initialize", map[string]any{
 		"protocolVersion": c.protocol, "capabilities": map[string]any{},
-		"clientInfo": map[string]any{"name": "algohash-mcp-sdk-go", "version": "0.1.0"},
+		"clientInfo": map[string]any{"name": "algohash-mcp-sdk-go", "version": "0.2.0"},
 	})
 	if err != nil {
 		return nil, err

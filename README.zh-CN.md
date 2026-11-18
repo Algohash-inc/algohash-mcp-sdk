@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="版本 0.1.0">
-  <img src="https://img.shields.io/badge/MCP_tools-33-purple?style=for-the-badge" alt="33 个 MCP 工具">
-  <img src="https://img.shields.io/badge/actions-399-green?style=for-the-badge" alt="399 个 action">
+  <img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="版本 0.2.0">
+  <img src="https://img.shields.io/badge/MCP_tools-36-purple?style=for-the-badge" alt="36 个 MCP 工具">
+  <img src="https://img.shields.io/badge/actions-414-green?style=for-the-badge" alt="414 个 action">
   <img src="https://img.shields.io/badge/runtime_deps-0-brightgreen?style=for-the-badge" alt="零运行时依赖">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT 许可证"></a>
 </p>
@@ -62,7 +62,7 @@
 
 - **🔗 一个 SDK，三个服务器** - Studio、Team 和 Open API 共用同一种客户端形态、同一种结果类型和同一套错误模型
 - **🛡️ 默认安全** - 付费和对外发布的 Studio、Team 步骤，必须由你在 AlgoHash 上批准后才会执行；你的 Agent 无法自行批准自己的花费
-- **🧬 带类型，自动生成** - 399 个 action，每一个都直接依据开放规范封装并写好文档，SDK 永远不会与服务器脱节
+- **🧬 带类型，自动生成** - 414 个 action，每一个都直接依据开放规范封装并写好文档，SDK 永远不会与服务器脱节
 - **🪶 零依赖** - 只用平台自带的 `fetch`、`urllib` 和 `net/http`，没有额外依赖需要审计、锁定或打补丁
 - **🧪 没有密钥也能体验** - 本地 mock 服务器可以运行所有示例和测试，无需账号，也不产生任何花费
 
@@ -71,10 +71,12 @@
 ### 1. 安装
 
 ```bash
-npm install @algohash/mcp                                  # TypeScript / JavaScript
-pip install algohash-mcp                                   # Python
-go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
+go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go                                            # Go
+pip install "git+https://github.com/Algohash-inc/algohash-mcp-sdk.git#subdirectory=sdks/python"   # Python
+npm install @algohash/mcp                                                                          # TypeScript / JavaScript
 ```
+
+PyPI（`algohash-mcp`）包还没有发布。Python SDK 目前请从这个仓库安装。
 
 ### 2. 获取密钥
 
@@ -83,6 +85,12 @@ go get github.com/Algohash-inc/algohash-mcp-sdk/sdks/go      # Go
 
 ```bash
 export ALGOHASH_STUDIO_KEY="smk_..."
+```
+
+在终端里工作？不用复制 key，用手机登录即可。登录后默认不能花费，需要你自己开启。[终端登录说明 →](docs/terminal-login.md)
+
+```bash
+npx @algohash/mcp login
 ```
 
 ### 3. 发起第一次调用
@@ -113,7 +121,7 @@ console.log(assets.status, assets.data);
 
 ```
 +------------------------------------------------------------------------------+
-|  KEY: Studio, scopes [read, edit]           271 allowed  ·  58 denied        |
+|  KEY: Studio, scopes [read, edit]           288 allowed  ·  62 denied        |
 +------------------------------------------------------------------------------+
 |                                                                              |
 |  ALLOWED (sample)                                                            |
@@ -186,7 +194,9 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 - 你的 Studio 账号：素材库、图片、视频、分镜、编辑器、成品、社交帖子
 - Scope 有 `read`、`edit`、`spend`、`publish`；新建密钥默认为 `read` + `edit` + `spend`
 - 分镜优先：每一支视频都从你批准过的分镜开始
-- 22 个工具 · 329 个 action
+- Playbook：一句要求就跑完整套预制流程（分镜、报价、出片），用 `studio_playbook`
+- 还有：分镜对白表、音乐分离加节拍表、口型同步、说话头像、评论 → 私信流程
+- 24 个工具 · 343 个 action
 
 ### 🟢 Team
 
@@ -194,7 +204,8 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 - Scope 有 `read`、`edit`、`spend`；新建密钥默认为 `read` + `edit`
 - 凡是花费、删除、套用草稿或开启高风险工具，一律先询问你
 - `client_ref` 让创建类调用可以安全重试；草稿带有 `rev`
-- 6 个工具 · 70 个 action
+- 每位队友可开 Plus 模式，给不能出错的工作用（`team.set_plus`）
+- 7 个工具 · 71 个 action
 
 ### 🟠 Open API
 
@@ -217,6 +228,18 @@ node tools/permissions.mjs studio read,edit --denied   # only what the key canno
 ## 🔌 连接 AI 应用
 
 无需写代码。把应用指向服务器 URL，然后登录即可。
+
+Claude 三步完成。ChatGPT 用同一个 server URL：
+
+```
+https://console.algohash.ai/mcp/studio
+```
+
+1. **Settings → Connectors → Add custom connector**
+2. 名称填 **AlgoHash Studio**，粘贴 URL，点 **Add**
+3. 点 **Connect**，登录 Studio 并批准
+
+默认不能花钱。每笔扣款都要你在报价卡上点批准。[完整设置教程 →](https://console.algohash.ai/mcp/studio/connect)
 
 | 宿主 | 方式 |
 |----------|----------|
@@ -298,6 +321,7 @@ ALGOHASH_MOCK=1 node samples/typescript/03-generate-image.mjs # terminal 2
 | **Team：部署任务** | `05-team-deploy.mjs` | `05_team_deploy.py` | `cmd/team-deploy` |
 | **Open API：报价 → 生成** | `06-open-quote.mjs` | `06_open_quote.py` | `cmd/open-quote` |
 | **为你自己的 Agent 提供工具** | `07-agent-context.mjs` | | |
+| **运行 playbook** | `08-playbook.mjs` | `08_playbook.py` | |
 
 在任何付费或对外公开的步骤之前，示例都会在终端里询问你。没有终端时，则一律拒绝。
 

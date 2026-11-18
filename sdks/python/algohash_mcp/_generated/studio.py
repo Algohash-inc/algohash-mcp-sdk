@@ -12,6 +12,8 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio.list_jobs": ("read",),
     "studio.select_version": ("edit",),
     "studio.import_reference_video": ("spend",),
+    "studio.extract_music": ("spend",),
+    "studio.extract_music_status": ("read",),
     "studio.list_productions": ("read",),
     "studio.get_production": ("read",),
     "studio.list_templates": ("read",),
@@ -25,13 +27,6 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio.render_paper_reel": ("spend",),
     "studio.motion_render_status": ("read",),
     "studio.cancel_motion_render": ("edit",),
-    "studio.fork_motion_template": ("edit",),
-    "studio.list_motion_forks": ("read",),
-    "studio.get_motion_fork": ("read",),
-    "studio.edit_motion_fork": ("edit",),
-    "studio.motion_fork_source": ("read",),
-    "studio.restore_motion_fork": ("edit",),
-    "studio.delete_motion_fork": ("edit",),
     "studio.list_scene_templates": ("read",),
     "studio.generate_scene_template": ("edit",),
     "studio.apply_scene_template": ("edit",),
@@ -39,6 +34,8 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio.set_shot_selection": ("edit",),
     "studio.generate_image": ("spend",),
     "studio.generate_video": ("spend",),
+    "studio.lip_sync": ("spend",),
+    "studio.avatar_video": ("spend",),
     "studio.create_asset": ("edit",),
     "studio.process_asset": ("spend",),
     "studio.edit_asset": ("spend",),
@@ -102,8 +99,10 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio.social_delete": ("publish",),
     "studio.social_like": ("publish",),
     "studio.social_dm_flows": ("read",),
+    "studio.social_dm_media": ("read",),
     "studio.social_dm_flow_save": ("publish",),
     "studio.social_dm_flow_enable": ("publish",),
+    "studio.social_dm_flow_delete": ("publish",),
     "studio.brand_list_posts": ("read",),
     "studio.brand_create_post": ("publish",),
     "studio.brand_delete_post": ("publish",),
@@ -223,10 +222,16 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio_create.storyboard_draw": ("spend",),
     "studio_create.storyboard_versions": ("read",),
     "studio_create.storyboard_revise": ("edit",),
+    "studio_create.storyboard_approve": ("edit",),
+    "studio_create.storyboard_dialogue": ("read",),
+    "studio_create.storyboard_dialogue_set": ("edit",),
+    "studio_create.storyboard_dialogue_plan": ("edit",),
     "studio_create.storyboard_clear": ("edit",),
     "studio_create.cut": ("spend",),
     "studio_create.cut_status": ("read",),
     "studio_create.cut_recompose": ("edit",),
+    "studio_create.wait_job": ("read",),
+    "studio_create.wait_approval": ("read",),
     "studio_clipper.quote": ("read",),
     "studio_clipper.analyze": ("spend",),
     "studio_clipper.list": ("read",),
@@ -281,9 +286,13 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio_outputs.get": ("read",),
     "studio_outputs.show": ("read",),
     "studio_storyboard.show": ("read",),
+    "studio_storyboard.overview": ("read",),
     "studio_storyboard.approve": ("edit",),
     "studio_storyboard.draw": ("spend",),
     "studio_storyboard.revise": ("edit",),
+    "studio_storyboard.dialogue": ("read",),
+    "studio_storyboard.dialogue_set": ("edit",),
+    "studio_storyboard.dialogue_plan": ("edit",),
     "studio_cast.pick": ("read",),
     "studio_cast.show": ("read",),
     "studio_cast.choose": ("edit",),
@@ -333,6 +342,11 @@ STUDIO_ACTION_SCOPES: Dict[str, tuple] = {
     "studio_paper.view": ("read",),
     "studio_paper.render": ("spend",),
     "studio_paper.delete": ("edit",),
+    "studio_playbook.list": ("edit",),
+    "studio_playbook.start": ("edit",),
+    "studio_playbook.step": ("edit",),
+    "studio_playbook.status": ("edit",),
+    "studio_playbook.cancel": ("edit",),
 }
 
 class StudioCore:
@@ -373,6 +387,14 @@ class StudioCore:
         """Paid: import a video from a supported platform URL into the library at a fixed fee; fully refunded on failure. Scopes: spend. Flags: paid."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "import_reference_video"})
 
+    def extract_music(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Paid: split the background music out of a library audio or video asset (`asset_id`) or an output (`output_id`), up to 600 s, and save it to the library (the voice is dropped). Returns a text beat map (`beatmap`) for cutting on the beat. Billed by actual compute, full refund on failure; on `pending` poll `extract_music_status`. Scopes: spend. Flags: paid."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "extract_music"})
+
+    def extract_music_status(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Check progress or fetch the result of `extract_music` (`job_id`; free). Scopes: read."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "extract_music_status"})
+
     def list_productions(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """List Director productions (storyboard-first ad projects). Scopes: read."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "list_productions"})
@@ -398,11 +420,11 @@ class StudioCore:
         return self._c.call("studio", {**(params or {}), **kw, "action": "get_image_style"})
 
     def search_motion_templates(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Search the motion template library (313 third-party templates ranked S/A/B/C; free); results include `preview_url`, `tier` and `layer_guess` (layerable or fullframe). Scopes: read."""
+        """Search the motion template library (313 templates ranked S/A/B/C by design quality: titles, kinetic type, logo reveals, transitions, charts, UI/product, social cards; free). Pass the user's own words as `query`; results include `preview_url` (4-frame preview), `tier` and `layer_guess` (layerable or fullframe). Scopes: read."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "search_motion_templates"})
 
     def get_motion_template(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Get one template in full: prompt, props (fields and defaults), composition (size/fps/frames), license and attribution; `include_code:true` adds the source. Scopes: read."""
+        """Get one template: props (fields and defaults), composition (size/fps/frames), preview and license. Change a template only through its props. Scopes: read."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "get_motion_template"})
 
     def preview_motion_template(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -424,34 +446,6 @@ class StudioCore:
     def cancel_motion_render(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Cancel a motion template render. Scopes: edit."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "cancel_motion_render"})
-
-    def fork_motion_template(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Copy a template into the user's own fork when props cannot give the effect; then `edit_motion_fork`, `preview_motion_template {fork_id}`, and after approval `render_motion_template {fork_id}`. Scopes: edit."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "fork_motion_template"})
-
-    def list_motion_forks(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """List the user's template forks. Scopes: read."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "list_motion_forks"})
-
-    def get_motion_fork(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Get one template fork. Scopes: read."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "get_motion_fork"})
-
-    def edit_motion_fork(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Edit a template fork (find/replace patches, helper files, size/duration meta); an edit that does not compile is not saved and the error location is returned. Scopes: edit."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "edit_motion_fork"})
-
-    def motion_fork_source(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Get the source of a template fork. Scopes: read."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "motion_fork_source"})
-
-    def restore_motion_fork(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Restore a template fork to an earlier state. Scopes: edit."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "restore_motion_fork"})
-
-    def delete_motion_fork(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Delete a template fork. Scopes: edit."""
-        return self._c.call("studio", {**(params or {}), **kw, "action": "delete_motion_fork"})
 
     def list_scene_templates(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """List the 35 ready-made scene templates (each shot has a first frame and camera move written), so a pick gives a full storyboard. Scopes: read."""
@@ -480,6 +474,14 @@ class StudioCore:
     def generate_video(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Disabled; use the storyboard flow and `storyboard_video` instead. Scopes: spend. Flags: paid."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "generate_video"})
+
+    def lip_sync(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Paid: lip sync. An existing clip `video_ref` plus a voice track `audio_ref`; only the mouth is redrawn to match the voice, face and background stay. Clip 2-10 s, 720-1920 px per side (rejected before any charge otherwise; split longer clips at pauses). Billed per second with a quote card; no storyboard needed. Scopes: spend. Flags: paid."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "lip_sync"})
+
+    def avatar_video(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Paid: talking avatar. One photo `image_ref` plus a voice track `audio_ref` gives a new talking-head video (head motion, expression, blinks and mouth are generated). Length = voice length, 2-300 s; photo at least 300 px per side, aspect 1:2.5 to 2.5:1; `avatar_mode` `std` (half price) or `pro`. Billed per second of voice with a quote card; no storyboard needed. Scopes: spend. Flags: paid."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "avatar_video"})
 
     def create_asset(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Create a new character/scene/prop draft from one reference image (free). Scopes: edit."""
@@ -733,13 +735,21 @@ class StudioCore:
         """List comment-to-DM flows (Chat Gate Instagram: a comment triggers a private message with buttons, finally handed to AI). Scopes: read."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "social_dm_flows"})
 
+    def social_dm_media(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """List the latest 24 posts of the Chat Gate Instagram account (to get a `media_id`); with several accounts connected it returns `accounts` first, then pass `ig_user_id`. Scopes: read."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "social_dm_media"})
+
     def social_dm_flow_save(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Destructive (needs `confirm: true`): create or edit a flow; `flow={media_id?, trigger:'all'|'keyword', keywords, public_reply?, steps:[{id, text, buttons:[{title, goto|url}], handoff}]}`. Scopes: publish. Flags: confirm."""
+        """Destructive (needs `confirm: true`): create or edit a flow; `flow={ig_user_id?, media_id?, trigger:'all'|'keyword', keywords, sources?:['comment'|'dm'|'story'], public_reply?, steps:[{id, text, buttons:[{title, goto|url}], handoff}]}`. Scopes: publish. Flags: confirm."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "social_dm_flow_save"})
 
     def social_dm_flow_enable(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Turn a flow on or off (`flow_id` + `enabled`). Scopes: publish."""
         return self._c.call("studio", {**(params or {}), **kw, "action": "social_dm_flow_enable"})
+
+    def social_dm_flow_delete(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Destructive (needs `confirm: true`): delete a flow (`flow_id`); use `enable` to pause instead. Scopes: publish. Flags: confirm."""
+        return self._c.call("studio", {**(params or {}), **kw, "action": "social_dm_flow_delete"})
 
     def brand_list_posts(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """List the brand feed. Scopes: read."""
@@ -1250,7 +1260,7 @@ class StudioCreate:
         return self._c.call("studio_create", {**(params or {}), **kw, "action": "quote"})
 
     def storyboard(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Step 2 storyboard (free, AI watches the video); returns `{version, plan_id, fee_hwt}`; `pending` = retry in 10 s; unmatched character returns `needs_cast` (retry with `args.cast_pick`). Scopes: edit."""
+        """Step 2 storyboard (free, AI watches the video). Cut modes take the same sources as `cut`; plain Create takes `{prompt, duration?, ratio?, refs?, sb_style?:'explainer', dialogue_language?, speakers?}`. `dialogue_language` / `speakers {name: language}` set the spoken language and write the dialogue sheet at once (default: the user's interface language). Returns `{version, plan_id, fee_hwt}`; `pending` = retry in 10 s with the same args; an unmatched character returns `needs_cast` (retry with `args.cast_pick`). Scopes: edit."""
         return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard"})
 
     def storyboard_draw(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1262,8 +1272,24 @@ class StudioCreate:
         return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_versions"})
 
     def storyboard_revise(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Revise the storyboard in plain language (free), creating a new version; args `{instruction}`; without `instruction` it just redraws a new version unchanged. Scopes: edit."""
+        """Revise the storyboard in plain language (free), creating a new version; args `{instruction, dialogue_language?, speakers?}`. Without `instruction` it draws a new version unchanged. `dialogue_language` / `speakers` rewrite the dialogue sheet of the new version in that language (free). Scopes: edit."""
         return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_revise"})
+
+    def storyboard_approve(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Destructive (needs `confirm: true`): record that the user approved this storyboard version (no card; same as `studio_storyboard.approve`). Call only after the user has seen the storyboard and clearly approved. args `{video_style?}`: `realistic` (default), `film`, `commercial`, `anime`, `animation3d` or `match`. Scopes: edit. Flags: confirm."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_approve"})
+
+    def storyboard_dialogue(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Read the storyboard dialogue sheet (no card; same as `studio_storyboard.dialogue`). args `{plan?: false}`. Scopes: read."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_dialogue"})
+
+    def storyboard_dialogue_set(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Set the storyboard dialogue sheet by hand (no card, free; same as `studio_storyboard.dialogue_set`). args `{lines:[{who, t0, t1, text, delivery?}]}`; `[]` = nobody speaks. Scopes: edit."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_dialogue_set"})
+
+    def storyboard_dialogue_plan(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Let AI write the storyboard dialogue sheet (no card, free; same as `studio_storyboard.dialogue_plan`). args `{language?, speakers?, direction?, replace?, narration?, narration_lang?}`. Scopes: edit."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "storyboard_dialogue_plan"})
 
     def storyboard_clear(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Destructive (needs `confirm: true`): clear the draft versions of the whole storyboard board (finished storyboard images stay in the library). Scopes: edit. Flags: confirm."""
@@ -1280,6 +1306,14 @@ class StudioCreate:
     def cut_recompose(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Rebuild the top/bottom split view when the AI video finished but the split was not produced (free, idempotent). Scopes: edit."""
         return self._c.call("studio_create", {**(params or {}), **kw, "action": "cut_recompose"})
+
+    def wait_job(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Wait for a video, image or cut job (`job_id`) or a storyboard image (`board` + `version`) without adding a card to the chat. The server waits up to `args.wait_sec` (default 45, max 50). Still running = call again; done = returns download links (same as `studio_outputs.get`). Use this to wait for results instead of polling `studio_outputs` or `studio_storyboard.show`, which add a card on every call. Scopes: read."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "wait_job"})
+
+    def wait_approval(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Call right after `studio_confirm.show`: wait for the user to approve or decline the quote or permission card without adding a card to the chat (up to 50 s; `open` = undecided, call again or stop and wait for the user). args `{confirm_token|permission_token, timeout_sec?}`. On `approved`, repeat the original action with the same args plus the token (if the server already started it, the result comes back directly). Scopes: read."""
+        return self._c.call("studio_create", {**(params or {}), **kw, "action": "wait_approval"})
 
 class StudioClipper:
     """`studio_clipper` — Clip highlights from long video. Long-video highlight clipper: a long video is transcribed word by word, AI picks highlights, and short 9:16 vertical clips are rendered. The default motion-edit style is the note-explainer layout (hook, persistent topic title, word-by-word captions, paper-collage illustrations, Instagram copy); `layout: motion` keeps the original motion look. Use `quote` for prices, `analyze` to find candidates, then `render` or `render_range` to cut clips."""
@@ -1454,7 +1488,7 @@ class StudioCompiler:
         return self._c.call("studio_compiler", {**(params or {}), **kw, "action": "refine"})
 
     def adapt(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Convert a script into render parameters for a model without rendering. args `{result, model, resolution?, aspect?}`. Scopes: read."""
+        """Convert a script into render settings for a model without rendering. args `{result (from compile, or result_id), model (id from list_video_models), resolution?, aspect?}`. Scopes: read."""
         return self._c.call("studio_compiler", {**(params or {}), **kw, "action": "adapt"})
 
     def run(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1545,17 +1579,33 @@ class StudioStoryboard:
         """Play the animated storyboard in the conversation. args `{version?, panel?, autoplay?}`; returns `shots[]` and a signed `sheet_url`; call again to jump to a shot. Scopes: read."""
         return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "show"})
 
+    def overview(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Full-film storyboard overview (free): for a multi-act film (one board per act) every frame is laid out on one sheet, rows = acts, columns = frames, with frame numbers and seconds running across acts and each frame's action, dialogue and notes printed. Call once after every act is drawn. args `{acts:[{board, version?, title?, notes?[]}], title?, subtitle?}`. The sheet is saved to the library (Storyboard folder); returns `output_id`, `sheet_url`, `shots[]`; undrawn acts are listed in `skipped` (not an error). Scopes: read."""
+        return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "overview"})
+
     def approve(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Destructive (needs `confirm: true`): record the user's approval of this version; only after they said approve. args `{video_style?}`: realistic (default), film, commercial, anime, animation3d, match. Scopes: edit. Flags: confirm."""
         return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "approve"})
 
     def draw(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Paid: draw an undrawn storyboard version as one image; call only when the user explicitly asks. args `{model?, seed?, draw_style?, arrows?}` as in `studio_create.storyboard_draw`. Scopes: spend. Flags: paid."""
+        """Paid: draw an undrawn storyboard version as one image (all frames on one sheet). This is what the plan card's draw button uses; agents should call `studio_create.storyboard_draw` instead (same result, no extra card). args `{model?, seed?, draw_style?, arrows?}`. A version already drawing or drawn is not billed again (returns `already`). Scopes: spend. Flags: paid."""
         return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "draw"})
 
     def revise(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Revise the storyboard in plain language (free, creates a new version that must be redrawn with `draw`). args `{instruction}`; without it a new version is drawn unchanged. Scopes: edit."""
+        """Revise the storyboard in plain language (free, creates a new version that must be redrawn). args `{instruction, language?, speakers?}`; without `instruction` a new version is drawn unchanged. `language` / `speakers` rewrite the dialogue sheet of the new version in that language. Scopes: edit."""
         return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "revise"})
+
+    def dialogue(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Read the storyboard dialogue sheet: every line the film will speak, `{who, t0, t1, text, lang}` (the video model speaks this sheet, not the words in the `storyboard_video` prompt). A drawn board with no dialogue yet is planned in the background (interface language, free) and returns `planning: true`; call again in 15 s. args `{plan?: false}`. Scopes: read."""
+        return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "dialogue"})
+
+    def dialogue_set(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Set the dialogue sheet by hand (free, replaces the current one). args `{lines:[{who, t0, t1, text, delivery?}]}`: `who` = a storyboard character name (from `speakers` in `dialogue`) or `NARRATION`; the language of `text` is the language spoken. `[]` = nobody speaks. Scopes: edit."""
+        return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "dialogue_set"})
+
+    def dialogue_plan(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Let AI write the dialogue sheet (free, it looks at the storyboard image). args `{language? (Mandarin, Cantonese, English, ...), speakers?:{name: language}, direction?, replace?, narration?, narration_lang?}`. With `language` the whole sheet is rewritten in that language. Returns every spoken line. Scopes: edit."""
+        return self._c.call("studio_storyboard", {**(params or {}), **kw, "action": "dialogue_plan"})
 
 class StudioCast:
     """`studio_cast` — Pick a character. Character selection: before a storyboard or render, ask the user which character from the character library should be the lead. Hosts that support MCP Apps show a character card to tap; other hosts give the user a `pick_url` web page, or the user answers with a number and you call `choose`. After picking, pass `args.cast_pick:<pick_id>` to the storyboard or render call."""
@@ -1594,7 +1644,7 @@ class StudioConfirm:
         return self._c.call("studio_confirm", {**(params or {}), **kw, "action": "show"})
 
     def wait(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Call right after `show` (or after giving the user the `approve_url`) to wait for the user's decision (up to 50 s; `open` means undecided, call again). args `{confirm_token|permission_token, timeout_sec?}`. Scopes: read."""
+        """Legacy: wait for the user's decision on the card (up to 50 s); every call adds one more waiting card to the chat. Prefer `studio_create.wait_approval` (same result, no card). args `{confirm_token|permission_token, timeout_sec?}`. Scopes: read."""
         return self._c.call("studio_confirm", {**(params or {}), **kw, "action": "wait"})
 
 class StudioBrowse:
@@ -1674,11 +1724,11 @@ class StudioCollage:
         return self._c.call("studio_collage", {**(params or {}), **kw, "action": "quote"})
 
     def render_stills(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Paid: render one still per sentence. args `{ns?, refs?:[…] (max 3), seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid."""
+        """Paid: render one finished still per sentence. args `{ns?:[sentence numbers] (default: every approved metaphor with no still or an expired one), refs?:[{asset_id|output_id|pillar,id, label}] (max 3 products or characters to appear), seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid."""
         return self._c.call("studio_collage", {**(params or {}), **kw, "action": "render_stills"})
 
     def render_videos(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Paid: render first/last-frame animations (one per sentence: empty paper to still in `solo` and for sentence 1, previous still to this still in `flow`). args `{ns?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid."""
+        """Paid: render one animation per sentence. args `{ns?}` (default: every approved still with no animation or an expired one); returns job ids, then `collect`. Scopes: spend. Flags: paid."""
         return self._c.call("studio_collage", {**(params or {}), **kw, "action": "render_videos"})
 
     def collect(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1720,7 +1770,7 @@ class StudioPaper:
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "options"})
 
     def plan(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Create a board. args `{topic (4-1500 chars), seconds? 12-30, language?, title?, voice?, mascot?, backdrops?, bed?, still_res?, notes?, refs?}`; returns `board_id`; script is AI-written in background. Scopes: edit."""
+        """Create a board. args `{topic (4-1500 chars), seconds? 12-30 (default 30), language?, title?, voice?, mascot? (default true), backdrops?: preset|generate, bed?, still_res?: 1K|2K|4K, notes?, refs?:[…] (product photos, max 3), layout?: auto (default: AI picks by topic and avoids the last 3 used) or a name from options.layouts, hook?}`; returns `board_id`; the script is AI-written in the background. Scopes: edit."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "plan"})
 
     def list(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1736,7 +1786,7 @@ class StudioPaper:
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "revise"})
 
     def edit(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Edit directly without AI (free). args `{scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?}`; names must come from `options`. Scopes: edit."""
+        """Edit directly without AI (free). args `{scenes?:[{n, say?, banner?, bg?, cut?, cam?, look?, els?, fx?, sfx?}], parts?:[{key, desc}], hook?, bed?, layout?, keyword?, brand?, end?:{ask?, handle?, bio?, line?}}` (`end` = end card; an empty `handle` removes it). Names must come from `options`. Scopes: edit."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "edit"})
 
     def approve(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1748,11 +1798,11 @@ class StudioPaper:
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "quote"})
 
     def render_art(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Paid: draw the elements (up to 6 per sheet; without `keys` all missing ones). args `{keys?, seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid."""
+        """Paid: draw the elements (without `keys`, all missing ones). args `{keys?, seed?}`; returns job ids, then `collect`. Scopes: spend. Flags: paid."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "render_art"})
 
     def collect(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Collect results: finished elements are cut out automatically (`collected`/`pending`/`failed`); redraw missing ones with `render_art {keys}` (failed orders are refunded). Scopes: edit."""
+        """Collect results into the board (`collected`/`pending`/`failed`); missing elements are named, redraw them with `render_art {keys}` (failed orders are refunded). Scopes: edit."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "collect"})
 
     def adopt(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1760,7 +1810,7 @@ class StudioPaper:
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "adopt"})
 
     def voice(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
-        """Free: synthesize narration, time the scenes to the real speech length, and produce music and sound effects. args `{voice?}` (30-90 s in the background). Scopes: edit."""
+        """Free: synthesize narration, time the scenes to the real speech length, and produce music and sound effects. args `{voice?}` (30-90 s in the background). Own narration instead of TTS: args `{vo:{asset_id|output_id} (a library audio file reading the script), lines?:[{start, sec}] (where each scene's line sits in the track; omitted = aligned by speech recognition)}`. Scopes: edit."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "voice"})
 
     def storyboard(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
@@ -1778,6 +1828,32 @@ class StudioPaper:
     def delete(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Destructive (needs `confirm: true`): delete this board (elements and voice track are deleted; finished films in the library are not). Scopes: edit. Flags: confirm."""
         return self._c.call("studio_paper", {**(params or {}), **kw, "action": "delete"})
+
+class StudioPlaybook:
+    """`studio_playbook` — Studio playbooks. AlgoHash ready-made playbooks: one request and the server runs the whole flow (storyboard, quote, render). You only ask the user, show the cards and hand over the result."""
+
+    def __init__(self, client: McpClient) -> None:
+        self._c = client
+
+    def list(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """List the playbooks and what each one needs to ask the user. Scopes: edit."""
+        return self._c.call("studio_playbook", {**(params or {}), **kw, "action": "list"})
+
+    def start(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Start a run: `{playbook, inputs}`; returns `run_id` and the next step. Scopes: edit."""
+        return self._c.call("studio_playbook", {**(params or {}), **kw, "action": "start"})
+
+    def step(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Advance a run: `{run_id, plus the user's reply: approve:true / revise:"change" / confirm_token / permission_token / cast_pick}`; with no reply it keeps waiting (still generating). Scopes: edit."""
+        return self._c.call("studio_playbook", {**(params or {}), **kw, "action": "step"})
+
+    def status(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """See where a run is: `{run_id}`. Scopes: edit."""
+        return self._c.call("studio_playbook", {**(params or {}), **kw, "action": "status"})
+
+    def cancel(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Cancel a run: `{run_id}`. Scopes: edit."""
+        return self._c.call("studio_playbook", {**(params or {}), **kw, "action": "cancel"})
 
 class StudioClient(McpClient):
     """Typed client for the studio MCP server (https://console.algohash.ai/mcp/studio)."""
@@ -1806,3 +1882,8 @@ class StudioClient(McpClient):
         self.browse = StudioBrowse(self)
         self.collage = StudioCollage(self)
         self.paper = StudioPaper(self)
+        self.playbook = StudioPlaybook(self)
+
+    def studio_manual(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """`studio_manual` — Read the manual for this server: rules, errors, recipes and per-tool help. Free, read-only, no scope needed."""
+        return self.call("studio_manual", {**(params or {}), **kw})

@@ -22,6 +22,7 @@ var TeamActionScopes = map[string][]string{
 	"team.set_triggers":               {"edit"},
 	"team.set_persona":                {"edit"},
 	"team.set_budget":                 {"edit"},
+	"team.set_plus":                   {"edit"},
 	"team.budget_approve":             {"spend"},
 	"team.create_room":                {"edit"},
 	"team.update_room":                {"edit"},
@@ -159,6 +160,11 @@ func (g TeamCore) SetPersona(ctx context.Context, p Params) (*ToolResult, error)
 // SetBudget: Set a teammate's budget `{mode, cap_hwt, share_pct, period, on_exceed}`; raising or removing the cap needs spend (needs approval). Scopes: edit. Flags: approval (some args).
 func (g TeamCore) SetBudget(ctx context.Context, p Params) (*ToolResult, error) {
 	return g.c.CallAction(ctx, "team", "set_budget", p)
+}
+
+// SetPlus: Turn Plus on or off for a teammate: stronger reasoning for work that must not go wrong (numbers, records, money); replies are a little slower and may use more HWT. Turning it on needs `spend` and approval. Scopes: edit. Flags: approval (some args).
+func (g TeamCore) SetPlus(ctx context.Context, p Params) (*ToolResult, error) {
+	return g.c.CallAction(ctx, "team", "set_plus", p)
 }
 
 // BudgetApprove: Approve extra budget for a teammate (needs approval). Scopes: spend. Flags: paid, approval.
@@ -468,4 +474,9 @@ func NewTeam(apiKey string, opts ...Option) *TeamClient {
 		Evolve:    TeamEvolve{c},
 		Confirm:   TeamConfirm{c},
 	}
+}
+
+// TeamManual calls team_manual — Read the manual for this server: rules, errors, recipes and per-tool help. Free, read-only, no scope needed.
+func (c *TeamClient) TeamManual(ctx context.Context, p Params) (*ToolResult, error) {
+	return c.Call(ctx, "team_manual", p)
 }

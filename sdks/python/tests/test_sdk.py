@@ -33,7 +33,7 @@ class SdkTest(unittest.TestCase):
         self.assertEqual(self.studio("smk_mock_read").initialize()["protocolVersion"], "2025-11-25")
 
     def test_list_tools(self):
-        self.assertEqual(len(self.studio("smk_mock_read").list_tools()), 22)
+        self.assertEqual(len(self.studio("smk_mock_read").list_tools()), 24)
 
     def test_read_ok(self):
         r = self.studio("smk_mock_read").core.list_assets(pillar="avatars")
@@ -53,7 +53,7 @@ class SdkTest(unittest.TestCase):
     def test_allowed_actions(self):
         m = self.studio("smk_mock_read").allowed_actions(["read"])
         self.assertIn("studio.list_assets", m["allowed"])
-        self.assertEqual(len(m["allowed"]) + len(m["denied"]), 329)
+        self.assertEqual(len(m["allowed"]) + len(m["denied"]), 343)
 
     def test_needs_confirmation(self):
         r = self.studio("smk_mock_read_edit_spend").create.storyboard_draw(version="v1")

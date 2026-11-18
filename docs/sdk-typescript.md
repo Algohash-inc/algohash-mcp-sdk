@@ -6,6 +6,13 @@
 npm install @algohash/mcp
 ```
 
+Sign a terminal in with your phone instead of copying a key (Studio and Team; spending stays off until
+you turn it on). See [terminal login](terminal-login.md).
+
+```bash
+npx @algohash/mcp login
+```
+
 ## Clients
 
 ```ts

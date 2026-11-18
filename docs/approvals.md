@@ -95,6 +95,11 @@ call, repeated up to `maxWaitSec`) for the user's decision. If the host cannot s
 helper asks your approver instead (TS `approve`, Python `approve=`, Go `CardApprover(fallback)`). `studio_confirm.decide` has **no SDK wrapper**: your code should never record a decision on the user's
 behalf. On page-approval keys the server only accepts a decline through it anyway.
 
+An agent that calls the tools itself in a card host should wait with
+`studio_create.wait_approval { args: { confirm_token } }` after `studio_confirm.show`: it returns the same
+decision, and unlike `studio_confirm.wait` it does not add another card to the chat on every call.
+`studio_create.wait_job` does the same for renders and drawn storyboards.
+
 ## What approvals protect against — and what they do not
 
 With the default (one-tap approval), the token goes back to whoever made the call. Approvals protect

@@ -20,6 +20,7 @@ TEAM_ACTION_SCOPES: Dict[str, tuple] = {
     "team.set_triggers": ("edit",),
     "team.set_persona": ("edit",),
     "team.set_budget": ("edit",),
+    "team.set_plus": ("edit",),
     "team.budget_approve": ("spend",),
     "team.create_room": ("edit",),
     "team.update_room": ("edit",),
@@ -145,6 +146,10 @@ class TeamCore:
     def set_budget(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Set a teammate's budget `{mode, cap_hwt, share_pct, period, on_exceed}`; raising or removing the cap needs spend (needs approval). Scopes: edit. Flags: approval (some args)."""
         return self._c.call("team", {**(params or {}), **kw, "action": "set_budget"})
+
+    def set_plus(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """Turn Plus on or off for a teammate: stronger reasoning for work that must not go wrong (numbers, records, money); replies are a little slower and may use more HWT. Turning it on needs `spend` and approval. Scopes: edit. Flags: approval (some args)."""
+        return self._c.call("team", {**(params or {}), **kw, "action": "set_plus"})
 
     def budget_approve(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
         """Approve extra budget for a teammate (needs approval). Scopes: spend. Flags: paid, approval."""
@@ -403,3 +408,7 @@ class TeamClient(McpClient):
         self.deploy = TeamDeploy(self)
         self.evolve = TeamEvolve(self)
         self.confirm = TeamConfirm(self)
+
+    def team_manual(self, params: Optional[Dict[str, Any]] = None, /, **kw: Any) -> ToolResult:
+        """`team_manual` — Read the manual for this server: rules, errors, recipes and per-tool help. Free, read-only, no scope needed."""
+        return self.call("team_manual", {**(params or {}), **kw})

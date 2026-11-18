@@ -212,7 +212,7 @@ class McpClient:
         self.__token = tok  # name-mangled; never shown by repr()
         self.key_scopes = list(key_scopes) if key_scopes is not None else None
         self._protocol = protocol_version
-        self._client_info = client_info or {"name": "algohash-mcp-sdk-python", "version": "0.1.0"}
+        self._client_info = client_info or {"name": "algohash-mcp-sdk-python", "version": "0.2.0"}
         self._timeout = timeout
         self._retry = retry_rate_limited
         self._headers = headers or {}

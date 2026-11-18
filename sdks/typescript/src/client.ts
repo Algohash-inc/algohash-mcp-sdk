@@ -338,7 +338,7 @@ export class McpClient {
       this.init = this.rpc("initialize", {
         protocolVersion: this.opts.protocolVersion,
         capabilities: {},
-        clientInfo: this.opts.clientInfo ?? { name: "algohash-mcp-sdk-ts", version: "0.1.0" },
+        clientInfo: this.opts.clientInfo ?? { name: "algohash-mcp-sdk-ts", version: "0.2.0" },
       }).then(async (r) => {
         this.negotiated = r?.protocolVersion;
         await this.send({ jsonrpc: "2.0", method: "notifications/initialized" }).catch(() => null);

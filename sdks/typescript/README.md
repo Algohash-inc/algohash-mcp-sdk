@@ -7,6 +7,13 @@ Zero runtime dependencies.
 npm install @algohash/mcp
 ```
 
+Sign a terminal in with your phone instead of copying a key (Studio and Team; spending stays off until
+you turn it on). See [terminal login](https://github.com/Algohash-inc/algohash-mcp-sdk/blob/main/docs/terminal-login.md).
+
+```bash
+npx @algohash/mcp login
+```
+
 ```ts
 import { StudioClient } from "@algohash/mcp";
 
